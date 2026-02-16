@@ -8,7 +8,7 @@
 
 ## Sisyphus Engine: Tech Stack
 
-- **OS** : Windows 10
+- **OS** : Windows 11
 
 - **IDE** : [VisualStudio 2022 community](https://www.microsoft.com/en-us/download/details.aspx?id=17431)
 
@@ -49,17 +49,257 @@
   </table>
 </p>
 
-순수 코드로 무엇을 렌더링해볼까 고민하다, 구름의 질감을 표현하는게 상당히 어렵다는 것을 알게 되었
-음
+순수 코드로 무엇을 렌더링해볼까 고민하다, 구름의 질감을 표현하는게 상당히 어렵다는 것을 알게 되었음
 
 이 [보랏빛 하늘](https://www.shutterstock.com/ko/image-photo/purple-sky-clouds-backdrop-orange-pink-2678999665?trackingId=19e277b6-eb35-471f-b876-09a679b367e4&listId=searchResults) 사진과 구름과 태양을 렌더링을 도전
 
 - [feature](https://github.com/BOLTB0X/DirectX11-Draw/tree/Sun-and-Cloud/SisyphusEngine#feature): **Ray Marching**, **Volumetric Cloud System** , **Atmospheric Lighting**
 
--  [자세한 README는 여기 클릭](https://github.com/BOLTB0X/DirectX11-Draw/tree/Sun-and-Cloud/SisyphusEngine#feature) 
+-  [자세한 README는 여기 클릭](https://github.com/BOLTB0X/DirectX11-Draw/tree/Sun-and-Cloud/SisyphusEngine#feature)
+
 
 <details>
-<summary> more 영상 </summary>
+<summary> 셰이더 Buffer (Refactoring: Lensflare) </summary>
+
+- `CloudBuffer` 
+
+  ```cpp
+  struct CloudBuffer {
+    // Row 1
+    DirectX::XMFLOAT3 baseColor;
+    float iCloudType;
+
+    // Row 2
+    DirectX::XMFLOAT3 ambient;
+    float maxSteps;
+
+    // Row 3
+    DirectX::XMFLOAT3 shadowColor;
+    float marchSize;
+
+    // Row 4
+    float radius;
+    float height;
+    float thickness;
+    float noiseRes;
+
+    // Row 5
+    float densityScale;
+    float falloffScale;
+    float mieIntensity;
+    float miePower;
+
+    // Row 6
+    float diffusePower;
+    float lightMultiply;
+    float shadowDist;
+    float maxDepth;
+
+    // Row 7
+    DirectX::XMFLOAT3 windDir;
+    float cloudSpeed;
+
+    // Row 8
+    float fbmScale;
+    float fbmFactor;
+    float fbmIncrement;
+    float fbmPersistance;
+
+    // Row 9
+    int fbmOctaves;
+    DirectX::XMFLOAT3 padding;
+
+    CloudBuffer(float cloudType)
+        : iCloudType(cloudType)
+    {
+        baseColor = { 1.0f, 1.0f, 1.0f };
+        ambient = { 0.2f, 0.15f, 0.3f };
+        shadowColor = { 0.4f, 0.4f, 0.5f };
+        maxSteps = 100.0f;
+        marchSize = 0.08f;
+
+        radius = 2.0f;
+        height = 1.0f;
+        thickness = 2.0f;
+        noiseRes = 256.0f;
+
+        densityScale = 0.4f;
+        falloffScale = 0.1f;
+        mieIntensity = 3.0f; // 전방 산란 밝기
+        miePower = 8.0f; // 전방 산란 날카로움
+
+        diffusePower = 2.0f;
+        lightMultiply = 3.0f;
+        shadowDist = 0.4f;
+        maxDepth = 50.0f;
+
+        windDir = { 1.0f, -0.2f, -1.0f };
+        cloudSpeed = 0.5f;
+
+        fbmScale = 0.5f;
+        fbmFactor = 2.02f;
+        fbmIncrement = 0.21f;
+        fbmPersistance = 0.5f;
+        fbmOctaves = 6;
+
+        padding = { 0.0f, 0.0f, 0.0f };
+    }
+  }; // CloudBuffer
+  ```
+
+  ```cpp
+  Texture2D iNoise : register(t0); // 노이즈 텍스처
+  Texture2D iBlueNoise : register(t1); // 블루 노이즈
+  SamplerState iSampler : register(s0); // 샘플러 상태
+
+
+  cbuffer CloudBuffer : register(b3)
+  {
+    // Row 1
+    float3 iCloudBaseColor;
+    float iCloudType;
+
+    // Row 2
+    float3 iCloudAmbient;
+    float iMaxSteps;
+
+    // Row 3
+    float3 iCloudShadowColor;
+    float iMarchSize;
+
+    // Row 4
+    float iRadius;
+    float iHeight;
+    float iTickness;
+    float iNoiseRes;
+    
+    // Row 5: 밀도 및 물리 감쇄 제어
+    float iDensityScale;
+    float iFalloffScale; 
+    float iMieIntensity;
+    float iMiePower;
+
+    // Row 6: 라이팅 디테일
+    float iDiffusePower;
+    float iLightMultiply;
+    float iShadowDist; //그림자 샘플링 거리
+    float iMaxDepth; // 최대 가시 거리
+    
+    // Row 7: FBM 및 애니메이션 제어
+    float3 iCloudWindDir;
+    float iCloudSpeed;
+
+    // Row 8: FBM 디테일 제어
+    float iFbmScale;
+    float iFbmFactor;
+    float iFbmIncrement;
+    float iFbmPersistance;
+    
+    // Row 9: 최적화 및 기타
+    int iFbmOctaves; // 루프 횟수
+    float3 iCloudPadding7;
+  };
+  ```
+
+- `SkyBuffer`
+
+  ```cpp
+  struct SkyBuffer {
+    // Row 1
+    DirectX::XMFLOAT3 topColor;
+    float skyExponent;
+
+    // Row 2
+    DirectX::XMFLOAT3 horizonColor;
+    float sunDistScale;
+
+    // Row 3
+    DirectX::XMFLOAT3 lowerColor;
+    float sunSize;
+
+    // Row 4
+    DirectX::XMFLOAT3 atmosphereColor;
+    float wideGlowScale;
+
+    // Row 5
+    float sunBloom;
+    float sunIntensity;
+    float bloomMult;
+    float glowMult;
+
+    // Row 6
+    float rayFreq;
+    float rayTimeScale;
+    DirectX::XMFLOAT2 padding;
+
+    SkyBuffer()
+    {
+        topColor = { 0.05f, 0.1f, 0.3f };
+        skyExponent = 0.3f;
+
+        horizonColor = { 0.5f, 0.2f, 0.4f };
+        sunDistScale = 0.2f;
+
+        lowerColor = { 0.05f, 0.02f, 0.1f };
+        sunSize = 0.005f;
+
+        atmosphereColor = { 1.0f, 0.6f, 0.2f };
+        wideGlowScale = 10.0f;
+
+        sunBloom = 80.0f;
+        sunIntensity = 0.8f;
+        bloomMult = 3.5f;
+        glowMult = 0.6f;
+
+        rayFreq = 3.0f;
+        rayTimeScale = 0.15f;
+        padding = { 0.0f, 0.0f };
+    }
+  }; // SkyBuffer
+  ```
+
+  ```cpp
+  cbuffer SkyBuffer : register(b3)
+  {
+    // Row 1: 하늘 기본 색상
+    float3 iSkyTopColor;
+    float iSkyExponent;
+
+    // Row 2: 지평선 및 태양 거리 스케일
+    float3 iSkyHorizonColor;
+    float iSunDistScale;
+
+    // Row 3: 하단 색상 및 태양 크기
+    float3 iSkyLowerColor;
+    float iSunSize;
+
+    // Row 4: 태양 산란 색상 및 범위 제어
+    float3 iAtmosphereColor;
+    float iWideGlowScale;
+
+    // Row 5: 태양 강도 및 감쇄 속성
+    float iSunBloom;
+    float iSunIntensity;
+    float iBloomMult;
+    float iGlowMult;
+
+    // Row 6: 레이 및 시간 속성
+    float iRayFreq;
+    float iRayTimeScale;
+    float2 iPadding;
+  }; // SkyBuffer
+  ```
+
+- [`CloudPS.hlsl`](https://github.com/BOLTB0X/DirectX11-Draw/blob/Procedural_LensFlare/SisyphusEngine/src/HLSL/CloudPS.hlsl)
+
+- [`SkyPS.hlsl`](https://github.com/BOLTB0X/DirectX11-Draw/blob/Procedural_LensFlare/SisyphusEngine/src/HLSL/SkyPS.hlsl)
+
+- [`RenderingEngine.cpp`](https://github.com/BOLTB0X/DirectX11-Draw/blob/Procedural_LensFlare/SisyphusEngine/src/RederingEngine/RenderingEngine.cpp)
+
+</details>
+
+<details>
+<summary> more 영상 및 설명 </summary>
 
 <p align="center">
   <table style="width:100%; text-align:center; border-spacing:20px;">
@@ -232,12 +472,265 @@
 
 [John Chapman의 Pseudo LensFlare](https://john-chapman-graphics.blogspot.com/2013/02/pseudo-lens-flare.html) 과 [shadertoy - musk's lens flare mod(icecool)](https://www.shadertoy.com/view/XdfXRX) 을 기반으로 렌즈플레어 적용
 
-- [feature](https://github.com/BOLTB0X/DirectX11-Draw/tree/LensFlare/SisyphusEngine#feature): **Ghost-Halo-Glow Generation** , **Falloff** , **Visibility Check** , **LensDrift**
+- feature: **Ghost-Halo-Glow Generation** , **Falloff** , **Visibility Check** , **LensDrift**
 
--  [자세한 README는 여기 클릭](https://github.com/BOLTB0X/DirectX11-Draw/tree/LensFlare/SisyphusEngine#feature) 
+- [Texture 기반 렌즈플레어의 자세한 README는 여기 클릭](https://github.com/BOLTB0X/DirectX11-Draw/tree/LensFlare/SisyphusEngine#feature)
+
+- [Noise 기반 procedural 렌즈플레어의 자세한 README는 여기 클릭](https://github.com/BOLTB0X/DirectX11-Draw/tree/Procedural_LensFlare/SisyphusEngine)
+
 
 <details>
-<summary> more 영상 </summary>
+<summary> LenFlare 셰이더 Buffer / 렌더링 파이프라인 </summary>
+
+- **Noise 기반 procedural 렌즈플레어**
+
+  ```cpp
+  struct LenFlareBuffer {
+      // Row 1: 기본 고스트 제어
+      int   count;
+      float spacing;
+      float threshold;
+      float alpha;
+
+      // Row 2: 태양 위치 및 기본 글로우
+      DirectX::XMFLOAT2 sunUV;
+      float glowSize;
+      float starScale;
+
+      // Row 3: 고스트 물리 속성 및 태양 코어
+      float ghostPull;
+      float ghostIntensity;
+      float ghostFalloff;
+      float sunCoreTightness;
+
+      // Row 4: 왜곡 및 휘도
+      DirectX::XMFLOAT3 distortion;
+      float padding1;
+
+      // Row 5: 휘도 기준
+      DirectX::XMFLOAT3 luminance;
+      float padding2;
+
+      // Row 6: F2 설정 (Offset + Sharpness)
+      DirectX::XMFLOAT3 f2Offset;
+      float f2Sharpness;
+
+      // Row 7: F2 색상
+      DirectX::XMFLOAT3 f2ColorMult;
+      float padding3;
+
+      // Row 8: F4 설정 (Offset + Power)
+      DirectX::XMFLOAT3 f4Offset;
+      float f4Power;
+
+      // Row 9: F4 색상
+      DirectX::XMFLOAT3 f4ColorMult;
+      float padding4;
+
+      // Row 10: F5 설정 (Offset + Power)
+      DirectX::XMFLOAT3 f5Offset;
+      float f5Power;
+
+      // Row 11: F5 색상
+      DirectX::XMFLOAT3 f5ColorMult;
+      float padding5;
+
+      // Row 12: F6 설정 (Offset + Power)
+      DirectX::XMFLOAT3 f6Offset;
+      float f6Power;
+
+      // Row 13: F6 색상
+      DirectX::XMFLOAT3 f6ColorMult;
+      float padding6;
+
+      // Row 14~17: 행렬
+      DirectX::XMMATRIX lensMatrix;
+
+      LenFlareBuffer()
+      {
+          // 기본 제어
+          count = 8;
+          spacing = 0.25f;
+          threshold = 0.9f;
+          alpha = 1.0f;
+
+          // 태양 관련
+          sunUV = { 0.5f, 0.5f };
+          glowSize = (float)ConstantHelper::SCREEN_WIDTH / (float)ConstantHelper::SCREEN_HEIGHT;
+          starScale = 0.8f;
+
+          // 고스트 속성 (#define 값들 이식)
+          ghostPull = 0.1f;
+          ghostIntensity = 1.5f;
+          ghostFalloff = 1.0f;
+          sunCoreTightness = 36.0f;
+
+          distortion = { -0.005f, 0.0f, 0.005f };
+          luminance = { 0.3f, 0.59f, 0.11f };
+
+          // F2 파라미터
+          f2Offset = { 0.80f, 0.85f, 0.90f };
+          f2Sharpness = 32.0f;
+          f2ColorMult = { 0.25f, 0.23f, 0.21f };
+
+          // F4 파라미터
+          f4Offset = { 0.40f, 0.45f, 0.50f };
+          f4Power = 2.4f;
+          f4ColorMult = { 6.0f, 5.0f, 3.0f };
+
+          // F5 파라미터
+          f5Offset = { 0.20f, 0.40f, 0.60f };
+          f5Power = 5.5f;
+          f5ColorMult = { 2.0f, 2.0f, 2.0f };
+
+          // F6 파라미터
+          f6Offset = { -0.3f, -0.325f, -0.35f };
+          f6Power = 1.6f;
+          f6ColorMult = { 6.0f, 3.0f, 5.0f };
+
+          // 패딩 초기화
+          padding1 = padding2 = padding3 = padding4 = padding5 = padding6 = 0.0f;
+
+          lensMatrix = DirectX::XMMatrixIdentity();
+      }
+  }; // LenFlareBuffer
+  ```
+
+  ```cpp
+  // Noise 기반 procedural 렌즈플레어
+  cbuffer LenFlareBuffer : register(b3)
+  {
+      // Row 1: 기본 고스트 제어
+      int iGhostCount; // 고스트 개수
+      float iGhostSpacing; // 고스트 간격
+      float iGhostThreshold; // 밝기 임계값
+      float iGhostAlpha; // 전체 투명도
+
+      // Row 2: 태양 위치 및 기본 글로우
+      float2 iSunUV; // 태양의 Screen UV
+      float iGlowSize; // 태양 주변 글로우 크기
+      float iStarScale;
+
+      // Row 3: 고스트 물리 속성 및 태양 코어
+      float iGhostPull;
+      float iGhostIntensity;
+      float iGhostFalloff;
+      float iSunCoreTight;
+
+      // Row 4: 왜곡 및 휘도
+      float3 iDistortion;
+      float iPadding1;
+
+      // Row 5: 휘도 기준
+      float3 iLuminance;
+      float iPadding2;
+
+      // Row 6: F2 설정
+      float3 iF2Offset;
+      float iF2Sharpness;
+
+      // Row 7: F2 색상
+      float3 iF2ColorMult;
+      float iPadding3;
+
+      // Row 8: F4 설정
+      float3 iF4Offset;
+      float iF4Power;
+
+      // Row 9: F4 색상
+      float3 iF4ColorMult;
+      float iPadding4;
+
+      // Row 10: F5 설정
+      float3 iF5Offset;
+      float iF5Power;
+
+      // Row 11: F5 색상
+      float3 iF5ColorMult;
+      float iPadding5;
+
+      // Row 12: F6 설정
+      float3 iF6Offset;
+      float iF6Power;
+
+      // Row 13: F6 색상
+      float3 iF6ColorMult;
+      float iPadding6;
+
+      // Row 14~17: 행렬
+      float4x4 iLensMatrix;
+  }; // LenFlareBuffer
+  ```
+
+- **Texture 기반 렌즈플레어**
+
+  ```cpp
+  struct LenFlareBuffer {
+	  // Row 1
+    int count;
+    float spacing;
+    float threshold;
+    float alpha;
+	  // Row 2
+    float glowSize;
+    float aspectRatio;
+	  DirectX::XMFLOAT2 sunUV;
+	  // Row 3
+    DirectX::XMMATRIX lensMatrix;
+
+    LenFlareBuffer()
+    {
+        count = 10;
+        spacing = 0.5f;
+        threshold = 0.8f;
+        alpha = 1.0f;
+
+		    glowSize = 0.2f;
+		    aspectRatio = (float)ConstantHelper::SCREEN_WIDTH / (float)ConstantHelper::SCREEN_HEIGHT;
+        sunUV = { 0.5f, 0.5f };
+
+        lensMatrix = DirectX::XMMatrixIdentity();
+    } 
+  }; // LenFlareBuffer
+  ```
+
+  ```cpp
+  Texture2D iSceneTex : register(t0);
+  Texture2D iGhost : register(t1);
+  Texture2D iGlow : register(t2);
+  Texture2D iHalo1 : register(t3);
+  Texture2D iHalo2 : register(t4);
+  Texture2D iHalo3 : register(t5);
+  Texture2D iStar : register(t6);
+  Texture2D iDepthTex : register(t7);
+  SamplerState iSampler : register(s0);
+
+
+  cbuffer LenFlareBuffer : register(b3)
+  {
+    int iGhostCount;
+    float iGhostSpacing;
+    float iGhostThreshold;
+    float iGhostAlpha;
+    
+    float iAspect;
+    float iGlowSize;
+    float2 iSunUV;
+    
+    float4x4 iLensMatrix;
+  }; // GhostBuffer
+  ```
+
+- [Noise 기반 procedural `LensFlarePS.hlsl`](https://github.com/BOLTB0X/DirectX11-Draw/blob/Procedural_LensFlare/SisyphusEngine/src/HLSL/LensFlarePS.hlsl)
+
+- [Texture 기반 `LensFlarePS.hlsl`](https://github.com/BOLTB0X/DirectX11-Draw/blob/LensFlare/SisyphusEngine/src/HLSL/LensFlarePS.hlsl)
+
+- [`RenderingEngine.cpp`](https://github.com/BOLTB0X/DirectX11-Draw/blob/Procedural_LensFlare/SisyphusEngine/src/RederingEngine/RenderingEngine.cpp)
+
+</details>
+
+<details>
+<summary> more 영상 및 설명 </summary>
 
 <p align="center">
   <table style="width:100%; text-align:center; border-spacing:20px;">
@@ -305,7 +798,7 @@
 
 - [시행착오 및 기록물들](https://github.com/BOLTB0X/DirectX11-Draw/tree/main/DemoGIF/lensFlare)
 
-- [자세한 `src` 폴더 구조 및 코드 설명](https://github.com/BOLTB0X/DirectX11-Draw/tree/LensFlare/SisyphusEngine/src)
+- [Texture 기반 자세한 `src` 폴더 구조 및 코드 설명](https://github.com/BOLTB0X/DirectX11-Draw/tree/LensFlare/SisyphusEngine/src)
 
     - [파이프라인 - 그래픽](https://github.com/BOLTB0X/DirectX11-Draw/blob/LensFlare/SisyphusEngine/src/RederingEngine/RenderingEngine.cpp)
 
@@ -314,6 +807,17 @@
     - [LensFlare Pixel Shader](https://github.com/BOLTB0X/DirectX11-Draw/blob/LensFlare/SisyphusEngine/src/HLSL/LensFlarePS.hlsl)
 
     - [셰이더 버퍼 정의(C++)](https://github.com/BOLTB0X/DirectX11-Draw/blob/LensFlare/SisyphusEngine/src/RederingEngine/Shader/ShaderBuffers.h)
+
+- [Noise 기반 procedural 자세한 `src` 폴더 구조 및 코드 설명](https://github.com/BOLTB0X/DirectX11-Draw/tree/Procedural_LensFlare/SisyphusEngine/src)
+
+    - [파이프라인 - 그래픽](https://github.com/BOLTB0X/DirectX11-Draw/blob/Procedural_LensFlare/SisyphusEngine/src/RederingEngine/RenderingEngine.cpp)
+
+    - [파이프라인 - etc](https://github.com/BOLTB0X/DirectX11-Draw/blob/Procedural_LensFlare/SisyphusEngine/src/MainEngine/MainEngine.cpp)
+
+    - [LensFlare Pixel Shader](https://github.com/BOLTB0X/DirectX11-Draw/blob/Procedural_LensFlare/SisyphusEngine/src/HLSL/LensFlarePS.hlsl)
+
+    - [셰이더 버퍼 정의(C++)](https://github.com/BOLTB0X/DirectX11-Draw/blob/Procedural_LensFlare/SisyphusEngine/src/RederingEngine/Shader/ShaderBuffers.h)
+
 
 </details>
 
