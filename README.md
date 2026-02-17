@@ -848,6 +848,8 @@
 
 - [렌즈플레어 적용시 화면 고스트 고정 현상](https://github.com/BOLTB0X/DirectX11-Draw/issues/5) -> [Ghost가 고정되었던 이유에서 존 챔피언 방식으로 고치는 이야기](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/Studies/FixedGhost.md)
 
+- [태양이 직사각형 형태로 잘리거나, 화면의 특정 영역에만 고정되어 나타나는 현상](https://github.com/BOLTB0X/DirectX11-Draw/issues/8)
+
 </details>
 
 <details>
