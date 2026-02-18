@@ -4,6 +4,7 @@
 #include "BicubicShader.h"
 #include "SkyShader.h"
 #include "LensFlareShader.h"
+#include "OceanShader.h"
 // Framework
 #include "Shader.h"
 // Common
@@ -52,6 +53,12 @@ bool ShaderManager::Init(ID3D11Device* device, HWND hwnd)
         ConstantHelper::LENSFLARE_PS) == false) return false;
 
     m_shaders[ShaderKeys::LensFlare] = std::move(lfShader);
+
+    auto OceanShder = std::make_unique<OceanShader>();
+    if (OceanShder->Init(device, hwnd,
+        ConstantHelper::OCEAN_VS,
+        ConstantHelper::OCEAN_PS) == false) return false;
+    m_shaders[ShaderKeys::Ocean] = std::move(OceanShder);
 
     return true;
 } // Init
@@ -117,14 +124,24 @@ void ShaderManager::UpdateSkyBuffer(ID3D11DeviceContext* context, const SkyBuffe
 } // UpdateSkyBuffer
 
 
-void ShaderManager::UpdateLensFlareBuffer(ID3D11DeviceContext* context, const LenFlareBuffer& ghost)
+void ShaderManager::UpdateLensFlareBuffer(ID3D11DeviceContext* context, const LenFlareBuffer& data)
 {
     auto* shader = GetShader<LensFlareShader>(ShaderKeys::LensFlare);
     if (shader)
     {
-		shader->UpdateLensFlareBuffer(context, ghost);
+		shader->UpdateLensFlareBuffer(context, data);
     }
 } // UpdateLensFlareBuffer
+
+
+void ShaderManager::UpdateOceanBuffer(ID3D11DeviceContext* context, const OceanBuffer& data)
+{
+    auto* shader = GetShader<OceanShader>(ShaderKeys::LensFlare);
+    if (shader)
+    {
+        shader->UpdateOceanBuffer(context, data);
+    }
+} // UpdateOceanBuffer
 
 
 void ShaderManager::SetShaders(const std::string key, ID3D11DeviceContext* context)
@@ -161,5 +178,11 @@ void ShaderManager::SetConstantBuffers(const std::string key,
         ID3D11Buffer* buffer = GetShader<SkyShader>(ShaderKeys::Sky)->GetLightBuffer();
         if (buffer == nullptr) return;
         static_cast<LensFlareShader*>(shader)->SetConstantBuffers(context, buffer);
+    }
+    else if (type == ShaderType::Ocean)
+    {
+        ID3D11Buffer* buffer = GetShader<SkyShader>(ShaderKeys::Sky)->GetLightBuffer();
+        if (buffer == nullptr) return;
+        static_cast<OceanShader*>(shader)->SetConstantBuffers(context, buffer);
     }
 } // SetConstantBuffers

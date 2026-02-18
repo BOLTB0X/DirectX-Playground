@@ -28,11 +28,14 @@ namespace ConstantHelper { // HLSL
     const std::wstring DEFAULT_VS = L"HLSL/DefaultVS.hlsl";
     const std::wstring QUAD_VS = L"HLSL/QuadVS.hlsl";
     const std::wstring SKY_VS = L"HLSL/SkyVS.hlsl";
+    const std::wstring OCEAN_VS = L"HLSL/OceanVS.hlsl";
 
     const std::wstring CLOUD_PS = L"HLSL/CloudPS.hlsl";
     const std::wstring BICUBIC_PS = L"HLSL/BicubicPS.hlsl";
     const std::wstring SKY_PS = L"HLSL/SkyPS.hlsl";
 	const std::wstring LENSFLARE_PS = L"HLSL/LensFlarePS.hlsl";
+    const std::wstring OCEAN_PS = L"HLSL/OceanPS.hlsl";
+
 };
 
 

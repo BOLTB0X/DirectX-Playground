@@ -3,8 +3,6 @@
 
 using namespace DirectX;
 
-/* default */
-/////////////////////////////////////////////////////
 
 Frustum::Frustum()
 	: m_screenDepth(0.0f)

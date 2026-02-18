@@ -293,3 +293,32 @@ struct LenFlareBuffer {
         lensMatrix = DirectX::XMMatrixIdentity();
     }
 }; // LenFlareBuffer
+
+
+struct OceanBuffer {
+    // Row 1: 파도 기본 설정
+    float seaHeight;
+    float seaChoppy;
+    float seaSpeed;
+    float seaFreq;
+
+    // Row 2: 색상 설정
+    DirectX::XMFLOAT3 seaBaseColor;
+    float time;
+
+    // Row 3: 물 색상 및 디테일
+    DirectX::XMFLOAT3 seaWaterColor;
+    float padding;
+
+    OceanBuffer()
+    {
+        seaHeight = 0.6f;
+        seaChoppy = 4.0f;
+        seaSpeed = 0.8f;
+        seaFreq = 0.16f;
+        seaBaseColor = { 0.0f, 0.09f, 0.18f };
+        seaWaterColor = { 0.48f, 0.54f, 0.36f };
+        time = 0.0f;
+        padding = 0.0f;
+    }
+}; // OceanBuffer
