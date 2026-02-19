@@ -2,6 +2,7 @@
 
 
 // 일반적인 수학
+///////////////////////////////////////////////////////////////
 
 float3 mod289(float3 x)
 {
@@ -44,7 +45,31 @@ float hash21(float2 p)
 } // hash21
 
 
+float hash21(float2 p, float2 scape, float offset)
+{
+    float h = dot(p, scape);
+    return frac(sin(h) * offset);
+} // hash21
+
+
+// 오일러 각을 이용한 3x3 회전 행렬 생성 (카메라/객체 회전용)
+// 인자: ang (pitch, yaw, roll)
+float3x3 fromEuler(float3 ang)
+{
+    float2 a1 = float2(sin(ang.x), cos(ang.x));
+    float2 a2 = float2(sin(ang.y), cos(ang.y));
+    float2 a3 = float2(sin(ang.z), cos(ang.z));
+    
+    float3x3 m;
+    m[0] = float3(a1.y * a3.y + a1.x * a2.x * a3.x, a1.y * a2.x * a3.x + a3.y * a1.x, -a2.y * a3.x);
+    m[1] = float3(-a2.y * a1.x, a1.y * a2.y, a2.x);
+    m[2] = float3(a3.y * a1.x * a2.x + a1.y * a3.x, a1.x * a3.x - a1.y * a3.y * a2.x, a2.y * a3.y);
+    return m;
+} // fromEuler
+
+
 // SDF(Signed DistanceFunction, or Signed Distance Field)
+////////////////////////////////////////////////////////////
 
 // 구 SDF
 float sdSphere(float3 p, float radius)

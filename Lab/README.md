@@ -1,6 +1,6 @@
 # Lab
 
-![헤헤](https://dcimg1.dcinside.com/viewimage.php?id=2eb2de27ebc22bf7&no=24b0d769e1d32ca73fea8efa11d028317044ef0bb41aaa70c68a363cd4e78bbbe285323cf2e7b6544bea4233189fca5efab655ab98ca2f9d29f8ec5deb547edbebfe2da0164b05332e79b75de8186b0f57)
+![헤헤](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/DemoGIF/%EC%97%B0%EC%84%B1%EC%A7%84.gif?raw=true)
 
 DriectX 11 개발 연습 및 학습물들 정리(아무 기능 구현이나 삽질 [과정에 생겼던 에러 및 궁금증](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/Studies/Error-history.md) 들을 기록)
 
@@ -491,6 +491,10 @@ DirectX 11에서  `ID3D11Buffer`  **인터페이스로 캡슐화되며, CPU에�
 
 - [rastertek - DirectX 11 on Windows 10 Tutorials 2](https://www.rastertek.com/tutdx11s2ter.html)
 
+- [rastertek (DirectX 11 on Windows 10 Tutorials) - Tutorial 31: Water](https://www.rastertek.com/dx11win10tut31.html)
+- [rastertek (DirectX 11 Terrain Tutorials) - Tutorial 5: Quad Trees](https://www.rastertek.com/tertut05.html)
+- [rastertek (DirectX 11 Terrain Tutorials) - Tutorial 16: Small Body Water](https://www.rastertek.com/tertut16.html)
+
 ### 환경 셋팅 관련
 
 - [stack overflow - Basic example for a CMake project definition using DirectX 11 on Windows 10?](https://stackoverflow.com/questions/73986114/basic-example-for-a-cmake-project-definition-using-directx-11-on-windows-10#:~:text=cmake_minimum_required%20(VERSION%203.13)%20project(CMakeDirect3DGame%20DESCRIPTION%20%22CMake%20example,_WIN32_WINNT=0x0601)%20endif()%20endif()%20set_property(DIRECTORY%20PROPERTY%20VS_STARTUP_PROJECT%20$%7BPROJECT_NAME%7D))
@@ -539,6 +543,12 @@ DirectX 11에서  `ID3D11Buffer`  **인터페이스로 캡슐화되며, CPU에�
 
 - [블로그 참고(titathecheese) - Rasterizer](https://titathecheese.tistory.com/category/DirectX%2011)
 
+- [Gaem Development: GLSL Shader - Change Hue/Saturation/Brightness](http://gamedev.stackexchange.com/questions/59797/glsl-shader-change-hue-saturation-brightness)
+
+- [wolfram alpha - 파형확인](https://www.wolframalpha.com/input)
+
+- [Github (jamesscully) - OpenGL Beach Scene](https://github.com/jamesscully/OpenGL-Beach-Scene)
+
 ### Ray
 
 - [블로그 참고 - 불륨마칭(maximeheckel)](https://blog.maximeheckel.com/posts/real-time-cloudscapes-with-volumetric-raymarching/)
@@ -550,6 +560,8 @@ DirectX 11에서  `ID3D11Buffer`  **인터페이스로 캡슐화되며, CPU에�
 - [github 참고 - Volumetric-Rendering(Chris' Graphics Blog)](https://wallisc.github.io/rendering/2020/05/02/Volumetric-Rendering-Part-1.html)
 
 - [티스토리 참고 - DirectX 11 Tone Mapping(kyuhwang)](https://kyuhwang.tistory.com/36)
+
+- [stack overflow - Random / noise functions for GLSL](https://stackoverflow.com/questions/4200224/random-noise-functions-for-glsl)
 
 ### 에셋 출처
 

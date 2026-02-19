@@ -295,30 +295,37 @@ struct LenFlareBuffer {
 }; // LenFlareBuffer
 
 
-struct OceanBuffer {
-    // Row 1: 파도 기본 설정
-    float seaHeight;
-    float seaChoppy;
-    float seaSpeed;
-    float seaFreq;
+struct WaterBuffer {
+    // Row 1: 기본 색상
+    DirectX::XMFLOAT3 waterBaseColor;
+    float padding1;
 
-    // Row 2: 색상 설정
-    DirectX::XMFLOAT3 seaBaseColor;
-    float time;
+    // Row 2: 변환 및 왜곡
+    float waterTranslation;
+    float reflectRefractScale;
+    DirectX::XMFLOAT2 padding2;
 
-    // Row 3: 물 색상 및 디테일
-    DirectX::XMFLOAT3 seaWaterColor;
-    float padding;
+    // Row 3: 최종 투명도
+    float finalAlpha;
+    DirectX::XMFLOAT3 padding3;
 
-    OceanBuffer()
+    WaterBuffer()
     {
-        seaHeight = 0.6f;
-        seaChoppy = 4.0f;
-        seaSpeed = 0.8f;
-        seaFreq = 0.16f;
-        seaBaseColor = { 0.0f, 0.09f, 0.18f };
-        seaWaterColor = { 0.48f, 0.54f, 0.36f };
-        time = 0.0f;
-        padding = 0.0f;
+        waterBaseColor = { 0.1f, 0.15f, 0.2f };
+        padding1 = 0.0f;
+        waterTranslation = 0.0f;
+        reflectRefractScale = 0.03f;
+        padding2 = { 0.0f, 0.0f };
+        finalAlpha = 0.5f;
+        padding3 = { 0.0f, 0.0f, 0.0f };
     }
-}; // OceanBuffer
+}; // WaterBuffer
+
+
+struct RefractionBuffer {
+    DirectX::XMFLOAT4 clipPlane; // 수면 클리핑 평면 (0, 1, 0, -waterHeight)
+
+    RefractionBuffer() {
+        clipPlane = { 0.0f, 1.0f, 0.0f, 0.0f };
+    }
+};

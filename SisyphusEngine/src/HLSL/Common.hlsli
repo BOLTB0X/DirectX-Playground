@@ -4,12 +4,14 @@ cbuffer GlobalBuffer : register(b1)
     float iTime;
     float iFrame;
     float2 iResolution;
+    
     // Row 2
     float3 iCameraPos;
-    float padding1;
+    float GlobalPadding1;
+    
     // Row 3
-    float4 padding2;
-};
+    float4 GlobalPadding2;
+}; // GlobalBuffer
 
 
 cbuffer LightBuffer : register(b2)

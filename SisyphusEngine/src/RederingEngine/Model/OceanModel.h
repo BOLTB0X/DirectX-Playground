@@ -7,7 +7,7 @@
 class GridModelBuffer;
 class QuadTree;
 class Frustum;
-class OceanShader;
+class WaterShader;
 
 
 class OceanModel {
@@ -18,7 +18,7 @@ public:
 
     bool Init(ID3D11Device*, int, int, float);
     void Shutdown();
-    void Render(Frustum*, ID3D11DeviceContext*, OceanShader*);
+    void Render(Frustum*, ID3D11DeviceContext*, WaterShader*);
 
     DirectX::XMMATRIX GetWorldMatrix();
 

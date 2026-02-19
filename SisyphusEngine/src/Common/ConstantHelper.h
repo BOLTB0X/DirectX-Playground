@@ -21,6 +21,7 @@ namespace ConstantHelper { // 모델 및 텍스처
     const std::string ASSET_PATH = "assets/";
     const std::string NOISE_PATH = ASSET_PATH + "Noise/noise.png";
     const std::string BLUE_NOISE_PATH = ASSET_PATH + "Noise/blue-noise.png";
+    const std::string WATER_PATH = ASSET_PATH + "Textures/water01.tga";
 }
 
 
@@ -28,13 +29,13 @@ namespace ConstantHelper { // HLSL
     const std::wstring DEFAULT_VS = L"HLSL/DefaultVS.hlsl";
     const std::wstring QUAD_VS = L"HLSL/QuadVS.hlsl";
     const std::wstring SKY_VS = L"HLSL/SkyVS.hlsl";
-    const std::wstring OCEAN_VS = L"HLSL/OceanVS.hlsl";
+    const std::wstring WATER_VS = L"HLSL/WaterVS.hlsl";
 
     const std::wstring CLOUD_PS = L"HLSL/CloudPS.hlsl";
     const std::wstring BICUBIC_PS = L"HLSL/BicubicPS.hlsl";
     const std::wstring SKY_PS = L"HLSL/SkyPS.hlsl";
 	const std::wstring LENSFLARE_PS = L"HLSL/LensFlarePS.hlsl";
-    const std::wstring OCEAN_PS = L"HLSL/OceanPS.hlsl";
+    const std::wstring WATER_PS = L"HLSL/WaterPS.hlsl";
 
 };
 

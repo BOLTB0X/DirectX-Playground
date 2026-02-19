@@ -21,6 +21,8 @@ Renderer::Renderer()
     m_DX11Device = std::make_unique<DX11Device>();
     m_MainRenderTarget = std::make_unique<RenderTarget>();
     m_LowResRenderTarget = std::make_unique<RenderTarget>();
+	m_ReflectionRT = std::make_unique<RenderTarget>();
+	m_RefractionRT = std::make_unique<RenderTarget>();
     m_Rasterizer = std::make_unique<Rasterizer>();
     m_DepthStencilState = std::make_unique<DepthStencilState>();
     m_BlendState = std::make_unique<BlendState>();
@@ -60,6 +62,16 @@ bool Renderer::Init(HWND hwnd, bool vsync)
         m_DX11Device->GetDevice(),
         SCREEN_WIDTH, SCREEN_HEIGHT)
         == false)
+        return false;
+
+    if (m_ReflectionRT->Init(
+        m_DX11Device->GetDevice(),
+        SCREEN_WIDTH, SCREEN_HEIGHT) == false)
+        return false;
+
+    if (m_RefractionRT->Init(
+        m_DX11Device->GetDevice(),
+        SCREEN_WIDTH, SCREEN_HEIGHT) == false)
         return false;
 
     // 각종 파이프라인 상태 객체 초기화
@@ -109,10 +121,13 @@ void Renderer::ClearShaderResources(UINT slot)
 
 void Renderer::Shutdown()
 {
+	if (m_BorderSampler) m_BorderSampler.reset();
     if (m_WrapSampler) m_WrapSampler.reset();
     if (m_BlendState) m_BlendState.reset();
     if (m_DepthStencilState) m_DepthStencilState.reset();
     if (m_Rasterizer) m_Rasterizer.reset();
+    if (m_ReflectionRT) m_ReflectionRT.reset();
+    if (m_RefractionRT) m_RefractionRT.reset();
     if (m_MainRenderTarget) m_MainRenderTarget.reset();
     if (m_DX11Device) m_DX11Device.reset();
     if (m_DisplayInfo) m_DisplayInfo.reset();
@@ -202,6 +217,41 @@ void Renderer::SetMainDepthShaderResource(UINT slot)
 } // SetMainDepthShaderResource
 
 
+void Renderer::SetRenderTarget(RenderTarget* target, float r, float g, float b, float a)
+{
+    ID3D11DeviceContext* context = m_DX11Device->GetDeviceContext();
+
+    // 기존에 바인딩된 SRV들 해제
+    ClearShaderResources(0);
+    ClearShaderResources(1);
+
+    // 타겟 클리어 및 설정
+    target->Clear(context, r, g, b, a);
+
+    ID3D11RenderTargetView* rtv = target->GetRenderTargetView();
+    ID3D11DepthStencilView* dsv = target->GetDepthStencilView();
+
+    context->OMSetRenderTargets(1, &rtv, dsv);
+    context->RSSetViewports(1, &target->GetViewport());
+} // SetRenderTarget
+
+
+void Renderer::SetReflectionShaderResource(UINT slot)
+{
+    ID3D11DeviceContext* context = m_DX11Device->GetDeviceContext();
+    auto srv = m_ReflectionRT->GetSRV();
+    context->PSSetShaderResources(slot, 1, &srv);
+} // SetReflectionShaderResource
+
+
+void Renderer::SetRefractionShaderResource(UINT slot)
+{
+    ID3D11DeviceContext* context = m_DX11Device->GetDeviceContext();
+    auto srv = m_RefractionRT->GetSRV();
+    context->PSSetShaderResources(slot, 1, &srv);
+} // SetRefractionShaderResource
+
+
 ID3D11Device* Renderer::GetDevice() const
 {
     return m_DX11Device->GetDevice();
@@ -212,3 +262,15 @@ ID3D11DeviceContext* Renderer::GetDeviceContext() const
 {
     return m_DX11Device->GetDeviceContext();
 } // GetDeviceContext
+
+
+RenderTarget* Renderer::GetReflectionRT() const
+{
+    return m_ReflectionRT.get();
+} // GetReflectionRT
+
+
+RenderTarget* Renderer::GetRefractionRT() const
+{
+    return m_RefractionRT.get();
+} // GetRefractionRT

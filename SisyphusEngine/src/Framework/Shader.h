@@ -4,7 +4,7 @@
 #include <wrl/client.h>
 #include <string>
 
-enum class ShaderType { None, Sun, Cloud, Sky, Bicubic, LensFlare, Ocean };
+enum class ShaderType { None, Sun, Cloud, Sky, Bicubic, LensFlare, Water, Refraction };
 
 class Shader {
 public:

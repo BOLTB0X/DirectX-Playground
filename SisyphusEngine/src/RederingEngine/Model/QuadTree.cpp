@@ -2,7 +2,7 @@
 #include "QuadTree.h"
 #include "GridModelBuffer.h"
 #include "Frustum.h"
-#include "Shader/OceanShader.h"
+#include "Shader/WaterShader.h"
 // Common
 #include "DebugHelper.h"
 #include "MathHelper.h"
@@ -53,7 +53,7 @@ void QuadTree::Shutdown()
 } // Shutdown
 
 
-void QuadTree::Render(Frustum* frustum, ID3D11DeviceContext* deviceContext, OceanShader* shader)
+void QuadTree::Render(Frustum* frustum, ID3D11DeviceContext* deviceContext, WaterShader* shader)
 {
     m_drawCount = 0;
     if (frustum == nullptr || deviceContext == nullptr)
@@ -254,7 +254,7 @@ void QuadTree::CalculateMeshDimensions(int vertexCount, float& centerX, float& c
 } // CalculateMeshDimensions
 
 
-void QuadTree::RenderNode(NodeType* node, Frustum* frustum, ID3D11DeviceContext* deviceContext, OceanShader* shader)
+void QuadTree::RenderNode(NodeType* node, Frustum* frustum, ID3D11DeviceContext* deviceContext, WaterShader* shader)
 {
     // 노드가 보이는지 확인
     // 쿼드 트리에서는 높이가 중요하지 않음

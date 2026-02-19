@@ -55,6 +55,18 @@ void DefaultModel::SetScale(float s)
 } // SetScale
 
 
+void DefaultModel::SetScale(float x, float y, float z)
+{
+    m_Position->SetScale(x, y, z);
+} // SetScale
+
+
+void DefaultModel::SetScale(DirectX::XMFLOAT3 scale)
+{
+    m_Position->SetScale(scale.x, scale.y, scale.z);
+} // SetScale
+
+
 void DefaultModel::SetRotation(DirectX::XMFLOAT3 position)
 {
     m_Position->SetRotation(position.x, position.y, position.z);

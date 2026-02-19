@@ -36,6 +36,12 @@ bool TexturesManager::Init(ID3D11Device* device, ID3D11DeviceContext* context)
         return false;
     }
 
+    if (GetTexture(device, context, WATER_PATH) == nullptr)
+    {
+        DebugPrint("TexturesManager::Init 실패: " + WATER_PATH);
+        return false;
+	}
+
     return true;
 } // Init
 

@@ -29,6 +29,9 @@ bool DefaultModelBuffer::Init(ID3D11Device* device, DefaultModelType type)
     case DefaultModelType::Sphere:
         CreateSphere(vertices, indices);
         break;
+    case DefaultModelType::Ocean:
+        CreateOcean(vertices, indices);
+		break;
     }
 
     m_vertexCount = static_cast<int>(vertices.size());
@@ -223,6 +226,23 @@ void DefaultModelBuffer::CreateSphere(std::vector<VertexType>& vertices, std::ve
         } // for (int j = 0; j < sliceCount; ++j)
     } // for (int i = 0; i < stackCount; ++i)
 } // CreateSphere
+
+
+void DefaultModelBuffer::CreateOcean(std::vector<VertexType>& vertices, std::vector<unsigned long>& indices)
+{
+    // RasterTek 데이터 (Position, UV, Normal)
+    vertices = {
+        { {-4.0f, 0.0f,  4.0f}, {0.0f, 0.0f}, {0.0f, 1.0f, 0.0f} }, // 좌상
+        { { 4.0f, 0.0f, -4.0f}, {1.0f, 1.0f}, {0.0f, 1.0f, 0.0f} }, // 우하
+        { {-4.0f, 0.0f, -4.0f}, {0.0f, 1.0f}, {0.0f, 1.0f, 0.0f} }, // 좌하
+
+        { { 4.0f, 0.0f,  4.0f}, {1.0f, 0.0f}, {0.0f, 1.0f, 0.0f} }, // 우상
+        { { 4.0f, 0.0f, -4.0f}, {1.0f, 1.0f}, {0.0f, 1.0f, 0.0f} }, // 우하
+        { {-4.0f, 0.0f,  4.0f}, {0.0f, 0.0f}, {0.0f, 1.0f, 0.0f} }  // 좌상
+    };
+
+    indices = { 0, 1, 2, 3, 4, 5 };
+} // CreateOcean
 
 
 int DefaultModelBuffer::GetVertexCount() const

@@ -5,7 +5,10 @@
 #include "Model/Light.h"
 #include "Model/TexturesManager.h"
 #include "Model/Texture.h"
+// Shader
 #include "Shader/ShaderManager.h"
+// Framework & Base
+//#include "Frustum.h"
 // Common
 #include "ConstantHelper.h"
 #include "DebugHelper.h"
@@ -28,6 +31,7 @@ RenderingEngine::RenderingEngine()
     m_Quad = std::make_unique<DefaultModel>();
     m_Sky = std::make_unique<DefaultModel>();
     m_Sun = std::make_unique<Light>();
+    m_Ocean = std::make_unique<DefaultModel>();
 } // RenderingEngine
 
 
@@ -52,7 +56,7 @@ bool RenderingEngine::Init(HWND hwnd)
         hwnd) == false) return false;
 
     if (m_Sky->Init(
-        m_Renderer->GetDevice(), DefaultModelType::Cube) == false)
+        m_Renderer->GetDevice(), DefaultModelType::Sphere) == false)
         return false;
 
     if (m_Quad->Init(
@@ -63,6 +67,10 @@ bool RenderingEngine::Init(HWND hwnd)
         m_Renderer->GetDevice(), DefaultModelType::Sphere) == false)
         return false;
 
+    if (m_Ocean->Init(
+        m_Renderer->GetDevice(), DefaultModelType::Ocean) == false)
+		return false;
+
     m_Sun->Init(ConstantHelper::LightPosition, ConstantHelper::LightColor, ConstantHelper::LightIntensity);
 
     return true;
@@ -71,6 +79,9 @@ bool RenderingEngine::Init(HWND hwnd)
 
 void RenderingEngine::Shutdown()
 {
+    if (m_Ocean)
+        m_Ocean->Shutdown();
+
     if (m_ShaderManager)
         m_ShaderManager.reset();
 
@@ -97,6 +108,17 @@ void RenderingEngine::Draw(
     XMMATRIX view = viewProp.Get();
     XMMATRIX proj = projProp.Get();
 
+    m_Renderer->SetRenderTarget(m_Renderer->GetRefractionRT(), 0, 0, 0, 1);
+    m_Renderer->SetDepthBuffer(true);
+
+    RefractionBuffer refrData;
+    refrData.clipPlane = XMFLOAT4(0.0f, -1.0f, 0.0f, -10.0f + 0.1f); // 수면 위를 Clip
+    m_ShaderManager->UpdateRefractionBuffer(context, refrData);
+
+    m_Renderer->SetRenderTarget(m_Renderer->GetReflectionRT(), 0, 0, 0, 1);
+    XMMATRIX reflectView = CalculateReflectionMatrix(camPos, -10.0f) * view;
+    DrawSky(context, totalTime, camPos, reflectView, proj);
+
     m_Renderer->SetLowResolutionRenderTarget();
     m_Renderer->SetAlphaBlending(true);
     m_Renderer->SetDepthBuffer(false);
@@ -104,10 +126,15 @@ void RenderingEngine::Draw(
     // 스카이
     DrawSky(context, totalTime, camPos, view, proj);
 
+	// 오션
     // Back-face Culling
-    m_Renderer->SetMode(false, true);
+    m_Renderer->SetDepthBuffer(true);
+    DrawOcean(context, totalTime, camPos, view, proj);
 
+    m_Renderer->SetMode(false, true);
+    m_Renderer->SetAlphaBlending(true);
     // 구름
+    m_Renderer->SetWrapSampler(0);
     DrawCloud(context, totalTime, camPos, view, proj);
 
 	// 포스트 프로세싱
@@ -182,10 +209,50 @@ void RenderingEngine::DrawSky(ID3D11DeviceContext* context,
 } // DrawSky
 
 
+void RenderingEngine::DrawOcean(ID3D11DeviceContext* context,
+    float totalTime, XMFLOAT3 camPos, XMMATRIX view, XMMATRIX proj)
+{
+    using namespace ConstantHelper;
+    float waterHeight = -10.0f;
+
+    m_Renderer->SetReflectionShaderResource(0); // t0: Reflection
+    m_Renderer->SetRefractionShaderResource(1); // t1: Refraction
+    m_TexturesManager->PSSetShaderResources(context, ConstantHelper::WATER_PATH, 2); // t2: Normal
+
+    m_Renderer->SetWrapSampler(0);
+
+    m_ShaderManager->UpdateGlobalBuffer(ShaderKeys::Water, context, totalTime, (float)m_frameCount, camPos);
+
+    WaterBuffer waterData;
+    waterData.waterTranslation = totalTime * 0.02f;
+    waterData.reflectRefractScale = 0.01f;
+    m_ShaderManager->UpdateWaterBuffer(context, waterData);
+
+    // 반사 행렬 업데이트
+    XMMATRIX reflectMatrix = CalculateReflectionMatrix(camPos, waterHeight);
+    m_ShaderManager->UpdateWaterReflectionMatrix(context, reflectMatrix);
+
+    m_Ocean->SetPosition(XMFLOAT3(camPos.x, waterHeight, camPos.z));
+    m_Ocean->SetScale(500.0f, 1.0f, 500.0f);
+
+    m_ShaderManager->UpdateMatrixBuffer(ShaderKeys::Water, context, m_Ocean->GetModelMatrix(), view, proj);
+    m_ShaderManager->SetShaders(ShaderKeys::Water, context);
+    m_ShaderManager->SetConstantBuffers(ShaderKeys::Water, context);
+
+    m_Renderer->SetMode(false, false);
+    m_Ocean->Render(context);
+    m_Renderer->SetMode(false, true);
+
+    // 리소스 정리
+    m_Renderer->ClearShaderResources(0);
+    m_Renderer->ClearShaderResources(1);
+    m_Renderer->ClearShaderResources(2);
+} // DrawOcean
+
+
 void RenderingEngine::DrawCloud(ID3D11DeviceContext* context,
     float totalTime, XMFLOAT3 camPos, XMMATRIX view, XMMATRIX proj)
 {
-    m_Renderer->SetWrapSampler(0);
     m_TexturesManager->PSSetShaderResources(context,
         ConstantHelper::NOISE_PATH, 0);
     m_TexturesManager->PSSetShaderResources(context,
@@ -195,6 +262,7 @@ void RenderingEngine::DrawCloud(ID3D11DeviceContext* context,
         context, totalTime, (float)m_frameCount, camPos);
 
     CloudBuffer cloudData((float)ConstantHelper::cloudType);
+
     m_ShaderManager->UpdateCloudBuffer(context, cloudData);
 
     if (ConstantHelper::cloudType == ConstantHelper::CloudType::Default)
@@ -206,8 +274,9 @@ void RenderingEngine::DrawCloud(ID3D11DeviceContext* context,
     }
     else
     {
+        m_Cloud->SetPosition(XMFLOAT3(camPos.x, camPos.y + 1, camPos.z));
         XMMATRIX cloudModel = XMMatrixTranslation(camPos.x, camPos.y, camPos.z);
-        m_ShaderManager->UpdateMatrixBuffer(ShaderKeys::Cloud, context, cloudModel, view, proj);
+        m_ShaderManager->UpdateMatrixBuffer(ShaderKeys::Cloud, context, m_Cloud->GetModelMatrix(), view, proj);
     }
     m_ShaderManager->SetShaders(ShaderKeys::Cloud, context);
     m_ShaderManager->SetConstantBuffers(ShaderKeys::Cloud, context);
@@ -299,3 +368,13 @@ XMMATRIX RenderingEngine::CalculateLensMatrix(const XMMATRIX& view)
 
     return XMMatrixTranspose(MathHelper::TransformUVRotationMatrix(camRot));
 } // CalculateLensMatrix
+
+
+XMMATRIX RenderingEngine::CalculateReflectionMatrix(XMFLOAT3 camPos, float waterHeight)
+{
+    float reflectionY = -camPos.y + (waterHeight * 2.0f);
+    XMVECTOR reflectionPos = XMVectorSet(camPos.x, reflectionY, camPos.z, 1.0f);
+    XMMATRIX reflectionMatrix = XMMatrixReflect(XMVectorSet(0, 1, 0, -waterHeight));
+
+    return reflectionMatrix;
+} // CalculateReflectionMatrix

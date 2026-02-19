@@ -4,7 +4,8 @@
 #include "BicubicShader.h"
 #include "SkyShader.h"
 #include "LensFlareShader.h"
-#include "OceanShader.h"
+#include "WaterShader.h"
+#include "RefractionShader.h"
 // Framework
 #include "Shader.h"
 // Common
@@ -54,11 +55,13 @@ bool ShaderManager::Init(ID3D11Device* device, HWND hwnd)
 
     m_shaders[ShaderKeys::LensFlare] = std::move(lfShader);
 
-    auto OceanShder = std::make_unique<OceanShader>();
-    if (OceanShder->Init(device, hwnd,
-        ConstantHelper::OCEAN_VS,
-        ConstantHelper::OCEAN_PS) == false) return false;
-    m_shaders[ShaderKeys::Ocean] = std::move(OceanShder);
+    auto waterShder = std::make_unique<WaterShader>();
+    if (waterShder->Init(device, hwnd,
+        ConstantHelper::WATER_VS,
+        ConstantHelper::WATER_PS) == false) return false;
+    m_shaders[ShaderKeys::Water] = std::move(waterShder);
+
+	auto refractionShader = std::make_unique<RefractionShader>();
 
     return true;
 } // Init
@@ -134,14 +137,35 @@ void ShaderManager::UpdateLensFlareBuffer(ID3D11DeviceContext* context, const Le
 } // UpdateLensFlareBuffer
 
 
-void ShaderManager::UpdateOceanBuffer(ID3D11DeviceContext* context, const OceanBuffer& data)
+void ShaderManager::UpdateWaterBuffer(ID3D11DeviceContext* context, const WaterBuffer& data)
 {
-    auto* shader = GetShader<OceanShader>(ShaderKeys::LensFlare);
+    auto* shader = GetShader<WaterShader>(ShaderKeys::Water);
+
     if (shader)
     {
-        shader->UpdateOceanBuffer(context, data);
+        shader->UpdateWaterBuffer(context, data);
     }
 } // UpdateOceanBuffer
+
+
+void ShaderManager::UpdateWaterReflectionMatrix(ID3D11DeviceContext* context, const DirectX::XMMATRIX& reflectionMatrix)
+{
+    auto waterShader = GetShader<WaterShader>(ShaderKeys::Water);
+    if (waterShader)
+    {
+        waterShader->UpdateReflectionBuffer(context, reflectionMatrix);
+    }
+} // UpdateWaterReflectionMatrix
+
+
+void ShaderManager::UpdateRefractionBuffer(ID3D11DeviceContext* context, const RefractionBuffer& data)
+{
+    auto refractionShader = GetShader<RefractionShader>(ShaderKeys::Refraction);
+    if (refractionShader)
+    {
+        refractionShader->UpdateRefractionBuffer(context, data);
+    }
+} // UpdateRefractionBuffer
 
 
 void ShaderManager::SetShaders(const std::string key, ID3D11DeviceContext* context)
@@ -163,9 +187,9 @@ void ShaderManager::SetConstantBuffers(const std::string key,
     Shader* shader = it->second.get();
     ShaderType type = shader->GetShaderType();
 
+    ID3D11Buffer* buffer = GetShader<SkyShader>(ShaderKeys::Sky)->GetLightBuffer();
     if (type == ShaderType::Cloud)
     {
-        ID3D11Buffer* buffer = GetShader<SkyShader>(ShaderKeys::Sky)->GetLightBuffer();
         if (buffer == nullptr) return;
         static_cast<CloudShader*>(shader)->SetConstantBuffers(context, buffer);
     }
@@ -175,14 +199,19 @@ void ShaderManager::SetConstantBuffers(const std::string key,
     }
     else if (type == ShaderType::LensFlare)
     {
-        ID3D11Buffer* buffer = GetShader<SkyShader>(ShaderKeys::Sky)->GetLightBuffer();
+        //ID3D11Buffer* buffer = GetShader<SkyShader>(ShaderKeys::Sky)->GetLightBuffer();
         if (buffer == nullptr) return;
         static_cast<LensFlareShader*>(shader)->SetConstantBuffers(context, buffer);
     }
-    else if (type == ShaderType::Ocean)
+    else if (type == ShaderType::Water)
     {
-        ID3D11Buffer* buffer = GetShader<SkyShader>(ShaderKeys::Sky)->GetLightBuffer();
+        //ID3D11Buffer* buffer = GetShader<SkyShader>(ShaderKeys::Sky)->GetLightBuffer();
         if (buffer == nullptr) return;
-        static_cast<OceanShader*>(shader)->SetConstantBuffers(context, buffer);
+        static_cast<WaterShader*>(shader)->SetConstantBuffers(context, buffer);
+    }
+    else if (key == ShaderKeys::Refraction)
+    {
+        if (buffer == nullptr) return;
+        static_cast<RefractionShader*>(it->second.get())->SetConstantBuffers(context, buffer);
     }
 } // SetConstantBuffers

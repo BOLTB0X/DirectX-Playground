@@ -70,6 +70,20 @@ void Position::SetScale(float s)
 } // SetScale
 
 
+void Position::SetScale(float x, float y, float z)
+{
+	m_scale = XMFLOAT3(x, y, z);
+	m_isDirty = true;
+} // SetScale
+
+
+void Position::SetScale(XMFLOAT3 s)
+{
+	m_scale = s;
+	m_isDirty = true;
+} // SetScale
+
+
 XMMATRIX Position::GetWorldMatrix()
 {
 	if (m_isDirty)

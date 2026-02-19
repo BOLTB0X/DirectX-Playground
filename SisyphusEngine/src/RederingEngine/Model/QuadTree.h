@@ -8,7 +8,7 @@
 
 class GridModelBuffer;
 class Frustum;
-class OceanShader;
+class WaterShader;
 
 const int MAX_TRIANGLES_PER_NODE = 10000;
 
@@ -18,6 +18,7 @@ public:
         DirectX::XMFLOAT3 position;
         DirectX::XMFLOAT2 texture;
         DirectX::XMFLOAT3 normal;
+        DirectX::XMFLOAT3 tangent;
     };
 
     struct NodeType {
@@ -43,7 +44,7 @@ public:
     void Shutdown();
 
 public:
-    void Render(Frustum*, ID3D11DeviceContext*, OceanShader*);
+    void Render(Frustum*, ID3D11DeviceContext*, WaterShader*);
     int GetDrawCount() const;
 
 private:
@@ -51,7 +52,7 @@ private:
     void CreateTreeNode(NodeType*, float, float, float, ID3D11Device*);
     int CountTriangles(float, float, float);
     bool IsTriangleContained(int, float, float, float);
-    void RenderNode(NodeType*, Frustum*, ID3D11DeviceContext*, OceanShader*);
+    void RenderNode(NodeType*, Frustum*, ID3D11DeviceContext*, WaterShader*);
 
 private:
     std::vector<VertexType> m_vertexList;

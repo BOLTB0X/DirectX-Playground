@@ -9,7 +9,8 @@
 enum class DefaultModelType {
     Quad,
     Cube,
-    Sphere
+    Sphere,
+    Ocean
 }; // DefaultModelType
 
 
@@ -41,8 +42,9 @@ private:
     bool InitBuffers(ID3D11Device*, std::vector<VertexType>, std::vector<unsigned long>);
 
     void CreateQuad(std::vector<VertexType>&, std::vector<unsigned long>&, float width = 2.0f, float height = 2.0f);
-    void CreateCube(std::vector<VertexType>&, std::vector<unsigned long>&, float width = 2.0f, float height = 2.0f, float depth = 2.0f);
+    void CreateCube(std::vector<VertexType>&, std::vector<unsigned long>&, float width = 2.0f, float height = 1.0f, float depth = 1.0f);
     void CreateSphere(std::vector<VertexType>&, std::vector<unsigned long>&, float radius = 2.0f, int sliceCount = 20, int stackCount = 20);
+    void CreateOcean(std::vector<VertexType>&, std::vector<unsigned long>&);
 
 private:
     Microsoft::WRL::ComPtr<ID3D11Buffer> m_vertexBuffer;

@@ -14,6 +14,8 @@ public:
     void SetRotation(DirectX::XMFLOAT3);
     void SetRotation(float, float, float);
     void SetScale(float);
+    void SetScale(float, float, float);
+	void SetScale(DirectX::XMFLOAT3);
 
     DirectX::XMFLOAT3 GetPosition() const { return m_position; }
     DirectX::XMFLOAT3 GetRotation() const { return m_rotation; }

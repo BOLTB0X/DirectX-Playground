@@ -36,9 +36,14 @@ public:
     void SetLowResolutionShaderResources(UINT);
 	void SetAdditiveAlphaBlending();
 	void SetMainDepthShaderResource(UINT slot);
+    void SetRenderTarget(RenderTarget*, float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 1.0f);
+    void SetReflectionShaderResource(UINT slot);
+    void SetRefractionShaderResource(UINT slot);
 
     ID3D11Device* GetDevice() const;
     ID3D11DeviceContext* GetDeviceContext() const;
+    RenderTarget* GetReflectionRT() const;
+    RenderTarget* GetRefractionRT() const;
 
 private:
     bool m_vsync_enabled;
@@ -48,6 +53,8 @@ private:
     std::unique_ptr<DX11Device>  m_DX11Device;
     std::unique_ptr<RenderTarget> m_MainRenderTarget;
     std::unique_ptr<RenderTarget> m_LowResRenderTarget;
+    std::unique_ptr<RenderTarget> m_ReflectionRT; // 반사용
+    std::unique_ptr<RenderTarget> m_RefractionRT; // 굴절용
 
     // 파이프라인 규칙(States)
     std::unique_ptr<Rasterizer> m_Rasterizer;

@@ -3,7 +3,8 @@
 #include "GridModelBuffer.h"
 #include "QuadTree.h"
 #include "Frustum.h"
-//#include "OceanShader.h"
+// Shader
+#include "Shader/WaterShader.h"
 
 
 using namespace DirectX;
@@ -58,7 +59,7 @@ DirectX::XMMATRIX OceanModel::GetWorldMatrix()
 } // GetWorldMatrix
 
 
-void OceanModel::Render(Frustum* frustum, ID3D11DeviceContext* context, OceanShader* shader)
+void OceanModel::Render(Frustum* frustum, ID3D11DeviceContext* context, WaterShader* shader)
 {
     if (m_quadTree)
     {

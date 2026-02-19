@@ -16,7 +16,8 @@ namespace ShaderKeys {
     const std::string Bicubic = "Bicubic";
     const std::string Sky = "Sky";
 	const std::string LensFlare = "LensFlare";
-    const std::string Ocean = "Ocean";
+    const std::string Water = "Water";
+	const std::string Refraction = "Refraction";
 } // ShaderKeys
 
 
@@ -65,7 +66,9 @@ public:
     void UpdateCloudBuffer(ID3D11DeviceContext*, const CloudBuffer&);
     void UpdateSkyBuffer(ID3D11DeviceContext*, const SkyBuffer&);
     void UpdateLensFlareBuffer(ID3D11DeviceContext*, const LenFlareBuffer&);
-    void UpdateOceanBuffer(ID3D11DeviceContext*, const OceanBuffer&);
+    void UpdateWaterBuffer(ID3D11DeviceContext*, const WaterBuffer&);
+    void UpdateWaterReflectionMatrix(ID3D11DeviceContext*, const DirectX::XMMATRIX&);
+    void UpdateRefractionBuffer(ID3D11DeviceContext*, const RefractionBuffer&);
 
     void SetShaders(const std::string, ID3D11DeviceContext*);
     void SetConstantBuffers(const std::string, ID3D11DeviceContext*);

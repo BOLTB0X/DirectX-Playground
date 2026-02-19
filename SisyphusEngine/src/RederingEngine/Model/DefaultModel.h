@@ -16,7 +16,9 @@ public:
 public:
     DirectX::XMMATRIX GetModelMatrix();
     void SetPosition(DirectX::XMFLOAT3);
-    void SetScale(float s);
+    void SetScale(float);
+    void SetScale(float, float, float);
+	void SetScale(DirectX::XMFLOAT3);
     void SetRotation(DirectX::XMFLOAT3);
 
 private:
