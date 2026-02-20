@@ -1,4 +1,5 @@
 #pragma once
+#include <DirectXMath.h>
 #include "ShaderBuffers.h"
 // Framework
 #include "Shader.h"
@@ -20,7 +21,7 @@ public:
     void SetConstantBuffers(ID3D11DeviceContext*);
     ID3D11Buffer* GetLightBuffer() { return m_lightBuffer.Get(); }
 
-    bool UpdateLightBuffer(ID3D11DeviceContext*, Light*);
+    bool UpdateLightBuffer(ID3D11DeviceContext*, Light*, DirectX::XMFLOAT2);
     bool UpdateSkyBuffer(ID3D11DeviceContext*, const SkyBuffer&);
 
 private:

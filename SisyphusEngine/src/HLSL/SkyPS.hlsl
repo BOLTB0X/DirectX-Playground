@@ -69,7 +69,7 @@ float3 coreGlow(float sunDist, float3 lightColor)
 } // coreGlow
 
 
-// 배경이 되는 하늘의 그라데이션 계산
+// 배경이 되는 하늘 계산
 float3 skyBackground(float3 rd)
 {
     float horizonFactor = pow(abs(rd.y), iSkyExponent);

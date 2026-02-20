@@ -1,55 +1,117 @@
+// 레스터택 코드 참고
+#include "Common.hlsli"
+
+
 SamplerState SampleType : register(s0);
 Texture2D reflectionTexture : register(t0);
-Texture2D normalTexture : register(t1);
+Texture2D refractionTexture : register(t1);
+Texture2D normalTexture : register(t2);
 
 
 cbuffer WaterBuffer : register(b4)
 {
+    // Row 1
     float3 iWaterBaseColor;
-    float wPadding1;
-    
     float iWaterTranslation;
-    float iReflectRefractScale;
-    float2 wPadding2;
     
+    // Row 2
+    float iReflectRefractScale;
+    float iWaveLength;
+    float iSpecularShininess;
+    float iWaterAlpha;
+    
+    // Row 3
+    float2 iWindDirection;
+    float iWindForce;
     float iFinalAlpha;
-    float3 wPadding3;
+    
+    // Row 4
+    float iHighlightsSize;
+    float iSunColumnWidth;
+    float iSunColumnIntensity;
+    float iSparkleIntensity;
 }; // WaterBuffer
 
 
-struct PixelInput
+struct WaterPixelInput
 {
     float4 position : SV_POSITION;
     float2 tex : TEXCOORD0;
     float4 reflectionPosition : TEXCOORD1;
+    float4 refractionPosition : TEXCOORD2;
+    float4 worldPosition : TEXCOORD3;
 }; // PixelInput
 
 
-float4 main(PixelInput input) : SV_TARGET
+float2 getScreenUV(float4 clipPosition)
 {
-    float2 reflectTexCoord;
-    float4 normalMap;
-    float3 normal;
-    float4 reflectionColor;
+    float2 uv;
+    
+    uv.x = clipPosition.x / clipPosition.w / 2.0f + 0.5f;
+    uv.y = -clipPosition.y / clipPosition.w / 2.0f + 0.5f;
+    return uv;
+} // getScreenUV
 
-    // 노멀맵 UV 애니메이션
-    float2 movingUV = input.tex;
-    movingUV.y += iWaterTranslation;
 
-    // 투영 텍스처 좌표 계산
-    reflectTexCoord.x = input.reflectionPosition.x / input.reflectionPosition.w / 2.0f + 0.5f;
-    reflectTexCoord.y = -input.reflectionPosition.y / input.reflectionPosition.w / 2.0f + 0.5f;
+float3 waterNormal(float2 texCoord)
+{
+    // 바람 적용
+    float2 scaledUV = texCoord / iWaveLength;
+    float2 moveOffset = normalize(iWindDirection) * (iWaterTranslation * iWindForce);
 
-    // 노멀맵 샘플링 및 왜곡 적용
-    normalMap = normalTexture.Sample(SampleType, movingUV);
-    normal = (normalMap.xyz * 2.0f) - 1.0f; // [0,1] -> [-1,1]
+    float2 uv1 = scaledUV + moveOffset;
+    float2 uv2 = scaledUV - (moveOffset * 0.5f) + float2(0.1f, 0.1f);
+    
+    float3 n1 = normalTexture.Sample(SampleType, uv1).xyz * 2.0f - 1.0f;
+    float3 n2 = normalTexture.Sample(SampleType, uv2).xyz * 2.0f - 1.0f;
+    
+    return normalize(n1 + n2);
+} // waterNormal
 
-    // 노멀의 XY 값을 왜곡 강도(scale)와 곱해 반사 UV를 비틂
-    reflectTexCoord += (normal.xy * iReflectRefractScale);
-    // 왜곡된 좌표로 반사 텍스처 샘플링
-    reflectionColor = reflectionTexture.Sample(SampleType, reflectTexCoord);
 
-    float4 waterBaseColor = float4(iWaterBaseColor, 1.0f);
+float4 visualSpecular(float2 screenUV, float3 normal)
+{
+    float2 distToSunVec = screenUV - iLightUV;
+    float2 distortedDist = distToSunVec + (normal.xy * iSparkleIntensity);
 
-    return lerp(waterBaseColor, reflectionColor, iFinalAlpha);
+    // 태양 중심부 하이라이트
+    float sunSpot = exp(-length(distortedDist) * (iSpecularShininess * iHighlightsSize));
+    
+    // 수직으로 늘어지는 빛 기둥
+    float verticalDist = saturate(screenUV.y - iLightUV.y);
+    float distanceFade = pow(verticalDist, 0.5f);
+    float sunColumn = exp(-abs(distortedDist.x) * iSunColumnWidth) * verticalDist * distanceFade;
+    
+    float finalSpecular = saturate(sunSpot + sunColumn * iSunColumnIntensity);
+    
+    return iLightColor * iIntensity * finalSpecular;
+} // visualSpecular
+
+
+float4 main(WaterPixelInput input) : SV_TARGET
+{
+    // UV
+    float2 screenUV = getScreenUV(input.refractionPosition);
+    float2 reflectUV = getScreenUV(input.reflectionPosition);
+    float2 refractUV = screenUV;
+
+    // 노멀 및 왜곡
+    float3 normal = waterNormal(input.tex);
+    float2 distortion = normal.xy * iReflectRefractScale;
+
+    reflectUV = clamp(reflectUV + distortion, 0.001f, 0.999f);
+    refractUV = clamp(refractUV + distortion, 0.001f, 0.999f);
+
+    // 텍스처 샘플링
+    float4 reflectionColor = reflectionTexture.Sample(SampleType, reflectUV);
+    float4 refractionColor = refractionTexture.Sample(SampleType, refractUV);
+
+    // 스펙큘러 하이라이트 보정
+    float4 specularHighlight = visualSpecular(screenUV, normal);
+
+    float4 waterColor = lerp(refractionColor, reflectionColor, iWaterAlpha);
+    float4 finalBase = float4(iWaterBaseColor, iWaterAlpha);
+    float4 finalColor = lerp(finalBase, waterColor, iFinalAlpha);
+
+    return saturate(finalColor + specularHighlight);
 } // main

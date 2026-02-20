@@ -1,5 +1,4 @@
 #pragma once
-#include<directxmath.h>
 // Common
 #include "MathHelper.h"
 #include "ConstantHelper.h"
@@ -30,8 +29,24 @@ struct LightBuffer {
     // Row 1
     DirectX::XMFLOAT3 direction;
     float intensity;
+
     // Row 2
     DirectX::XMFLOAT4 color;
+
+    // Row 3
+    DirectX::XMFLOAT2 lightUV;
+    DirectX::XMFLOAT2 padding;
+
+
+    LightBuffer(DirectX::XMFLOAT3 _direction, float _intensity,
+        DirectX::XMFLOAT4 _color,
+        DirectX::XMFLOAT2 _lightUV)
+        : direction(_direction), intensity(_intensity),
+        color(_color),
+        lightUV(_lightUV)
+    {
+        padding = { 0.0f, 0.0f };
+    }
 }; // LightBuffer
 
 
@@ -84,8 +99,8 @@ struct CloudBuffer {
         : iCloudType(cloudType)
     {
         baseColor = { 1.0f, 1.0f, 1.0f };
-        ambient = { 0.2f, 0.15f, 0.3f };
-        shadowColor = { 0.4f, 0.4f, 0.5f };
+        ambient = { 0.25f, 0.25f, 0.25f };
+        shadowColor = { 0.02f, 0.08f, 0.25f };
         maxSteps = 100.0f;
         marchSize = 0.08f;
 
@@ -97,10 +112,10 @@ struct CloudBuffer {
         densityScale = 0.4f;
         falloffScale = 0.1f;
         mieIntensity = 3.0f; // 전방 산란 밝기
-        miePower = 8.0f; // 전방 산란 날카로움
+        miePower = 15.0f; // 전방 산란 날카로움
 
         diffusePower = 2.0f;
-        lightMultiply = 3.0f;
+        lightMultiply = 4.0f;
         shadowDist = 0.4f;
         maxDepth = 50.0f;
 
@@ -148,11 +163,11 @@ struct SkyBuffer {
 
     SkyBuffer()
     {
-        topColor = { 0.05f, 0.1f, 0.3f };
-        skyExponent = 0.3f;
+        topColor = { 0.02f, 0.08f, 0.25f };
+        skyExponent = 0.35f;
 
-        horizonColor = { 0.5f, 0.2f, 0.4f };
-        sunDistScale = 0.2f;
+        horizonColor = { 0.65f, 0.32f, 0.12f };
+        sunDistScale = 1.5f;
 
         lowerColor = { 0.05f, 0.02f, 0.1f };
         sunSize = 0.005f;
@@ -258,7 +273,7 @@ struct LenFlareBuffer {
         glowSize = (float)ConstantHelper::SCREEN_WIDTH / (float)ConstantHelper::SCREEN_HEIGHT;
         starScale = 0.8f;
 
-        // 고스트 속성 (#define 값들 이식)
+        // 고스트 속성
         ghostPull = 0.1f;
         ghostIntensity = 1.5f;
         ghostFalloff = 1.0f;
@@ -296,36 +311,50 @@ struct LenFlareBuffer {
 
 
 struct WaterBuffer {
-    // Row 1: 기본 색상
+    // Row 1: 기본 색상 및 기본 변환
     DirectX::XMFLOAT3 waterBaseColor;
-    float padding1;
-
-    // Row 2: 변환 및 왜곡
     float waterTranslation;
+
+    // Row 2: 왜곡 및 파도 설정
     float reflectRefractScale;
-    DirectX::XMFLOAT2 padding2;
+    float waveLength;
+    float specularShininess;
+    float waterAlpha;
 
-    // Row 3: 최종 투명도
+    // Row 3: 바람 설정
+    DirectX::XMFLOAT2 windDirection;
+    float windForce;
     float finalAlpha;
-    DirectX::XMFLOAT3 padding3;
 
-    WaterBuffer()
-    {
+    // Row 4:스펙큘러 상세 제어
+    float highlightsSize; // 하이라이트 크기
+    float sunColumnWidth; // 빛 기둥 너비
+    float sunColumnInensity; // 빛 기둥 강도
+    float sparkleIntensity; // 물결 자글거림 강도
+
+    WaterBuffer() {
         waterBaseColor = { 0.1f, 0.15f, 0.2f };
-        padding1 = 0.0f;
         waterTranslation = 0.0f;
         reflectRefractScale = 0.03f;
-        padding2 = { 0.0f, 0.0f };
-        finalAlpha = 0.5f;
-        padding3 = { 0.0f, 0.0f, 0.0f };
+        waveLength = 0.5f;
+        specularShininess = 200.0f;
+        waterAlpha = 0.6f;
+        windDirection = { 1.0f, 0.5f };
+        windForce = 0.5f;
+        finalAlpha = 0.9f;
+
+        highlightsSize = 0.05f;
+        sunColumnWidth = 30.0f;
+        sunColumnInensity = 0.5f;
+        sparkleIntensity = 0.1f;
     }
 }; // WaterBuffer
 
 
 struct RefractionBuffer {
-    DirectX::XMFLOAT4 clipPlane; // 수면 클리핑 평면 (0, 1, 0, -waterHeight)
+    DirectX::XMFLOAT4 clipPlane;
 
     RefractionBuffer() {
         clipPlane = { 0.0f, 1.0f, 0.0f, 0.0f };
     }
-};
+}; // RefractionBuffer

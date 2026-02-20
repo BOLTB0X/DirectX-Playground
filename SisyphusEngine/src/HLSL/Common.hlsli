@@ -18,7 +18,11 @@ cbuffer LightBuffer : register(b2)
 {
     float3 iLightDirection;
     float iIntensity;
+    
     float4 iLightColor;
+    
+    float2 iLightUV;
+    float2 lPadding;
 }; // LightBuffer
 
 

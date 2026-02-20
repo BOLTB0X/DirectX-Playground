@@ -31,6 +31,7 @@ public:
     DirectX::XMFLOAT4 GetColor() const;
     float GetIntensity() const;
     DirectX::XMMATRIX GetModelMatrix();
+    DirectX::XMFLOAT2 GetModelUV(const DirectX::XMMATRIX&, const DirectX::XMMATRIX&);
 
 private:
     std::unique_ptr<DefaultModelBuffer> m_ModelBuffer;

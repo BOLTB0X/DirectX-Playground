@@ -1,6 +1,7 @@
 #include "Pch.h"
 #include "RenderingEngine.h"
 #include "Renderer/Renderer.h"
+#include "Renderer/RenderTexture.h"
 #include "Model/DefaultModel.h"
 #include "Model/Light.h"
 #include "Model/TexturesManager.h"
@@ -11,6 +12,7 @@
 //#include "Frustum.h"
 // Common
 #include "ConstantHelper.h"
+#include "MathHelper.h"
 #include "DebugHelper.h"
 
 
@@ -25,6 +27,7 @@ RenderingEngine::RenderingEngine()
     m_frameCount(0)
 {
     m_Renderer = std::make_unique<Renderer>();
+    m_RenderTexture = std::make_unique<RenderTexture>();
     m_TexturesManager = std::make_unique<TexturesManager>();
     m_ShaderManager = std::make_unique<ShaderManager>();
     m_Cloud = std::make_unique<DefaultModel>();
@@ -37,13 +40,18 @@ RenderingEngine::RenderingEngine()
 
 RenderingEngine::~RenderingEngine()
 {
-
+    Shutdown();
 } // ~RenderingEngine
 
 
 bool RenderingEngine::Init(HWND hwnd)
 {
     if (m_Renderer->Init(hwnd, true) == false)
+        return false;
+
+    if (m_RenderTexture->Init(m_Renderer->GetDevice(),
+        ConstantHelper::SCREEN_WIDTH,
+        ConstantHelper::SCREEN_HEIGHT) == false)
         return false;
 
     if (m_TexturesManager->Init(
@@ -88,6 +96,12 @@ void RenderingEngine::Shutdown()
     if (m_TexturesManager)
         m_TexturesManager.reset();
 
+    if (m_RenderTexture)
+    {
+        m_RenderTexture->Shutdown();
+        m_RenderTexture.reset();
+    }
+
     if (m_Renderer)
     {
         m_Renderer->Shutdown();
@@ -95,60 +109,6 @@ void RenderingEngine::Shutdown()
     }
     return;
 } // Shutdown
-
-
-void RenderingEngine::Draw(
-    float totalTime,
-    Property<XMMATRIX> viewProp,
-    Property<XMMATRIX> projProp,
-    Property<XMFLOAT3> camPosProp)
-{
-    ID3D11DeviceContext* context = m_Renderer->GetDeviceContext();
-    XMFLOAT3 camPos = camPosProp.Get();
-    XMMATRIX view = viewProp.Get();
-    XMMATRIX proj = projProp.Get();
-
-    m_Renderer->SetRenderTarget(m_Renderer->GetRefractionRT(), 0, 0, 0, 1);
-    m_Renderer->SetDepthBuffer(true);
-
-    RefractionBuffer refrData;
-    refrData.clipPlane = XMFLOAT4(0.0f, -1.0f, 0.0f, -10.0f + 0.1f); // 수면 위를 Clip
-    m_ShaderManager->UpdateRefractionBuffer(context, refrData);
-
-    m_Renderer->SetRenderTarget(m_Renderer->GetReflectionRT(), 0, 0, 0, 1);
-    XMMATRIX reflectView = CalculateReflectionMatrix(camPos, -10.0f) * view;
-    DrawSky(context, totalTime, camPos, reflectView, proj);
-
-    m_Renderer->SetLowResolutionRenderTarget();
-    m_Renderer->SetAlphaBlending(true);
-    m_Renderer->SetDepthBuffer(false);
-
-    // 스카이
-    DrawSky(context, totalTime, camPos, view, proj);
-
-	// 오션
-    // Back-face Culling
-    m_Renderer->SetDepthBuffer(true);
-    DrawOcean(context, totalTime, camPos, view, proj);
-
-    m_Renderer->SetMode(false, true);
-    m_Renderer->SetAlphaBlending(true);
-    // 구름
-    m_Renderer->SetWrapSampler(0);
-    DrawCloud(context, totalTime, camPos, view, proj);
-
-	// 포스트 프로세싱
-    m_Renderer->SetBackBufferRenderTarget();
-    m_Renderer->SetAlphaBlending(false);
-
-    ApplyLensFlare(context, view, proj, camPos);
-    ApplyBicubicUpscale(context);
-
-    m_Renderer->ClearShaderResources(0);
-    m_Renderer->SetDepthBuffer(true);
-  
-    m_frameCount++;
-} // Draw
 
 
 void RenderingEngine::BeginScene(float r, float g, float b, float a)
@@ -175,6 +135,24 @@ void RenderingEngine::SetDepthBuffer(bool depthEnable)
 } // SetDepthBuffer
 
 
+void RenderingEngine::SetWireframeEnable(bool val)
+{
+    m_isWireframe = val;
+} // SetWireframeEnable
+
+
+void RenderingEngine::SetBackCullEnable(bool val)
+{
+    m_backCullEnable = val;
+} // SetBackCullEnable
+
+
+void RenderingEngine::SetDepthEnable(bool val)
+{
+    m_depthEnable = val;
+} // SetDepthEnable
+
+
 ID3D11Device* RenderingEngine::GetDevice()
 {
     return m_Renderer->GetDevice();
@@ -187,6 +165,80 @@ ID3D11DeviceContext* RenderingEngine::GetDeviceContext()
 } // GetDeviceContext
 
 
+bool RenderingEngine::GetWireframeEnable() const
+{
+    return m_isWireframe;
+} // GetWireframeEnable
+
+
+bool RenderingEngine::GetBackCullEnable() const
+{
+    return m_backCullEnable;
+} // GetBackCullEnable
+
+
+bool RenderingEngine::GetDepthEnable() const
+{
+    return m_depthEnable;
+} // GetDepthEnable
+
+
+void RenderingEngine::Draw(
+    float totalTime,
+    Property<XMMATRIX> viewProp,
+    Property<XMMATRIX> projProp,
+    Property<XMFLOAT3> camPosProp)
+{
+    ID3D11DeviceContext* context = m_Renderer->GetDeviceContext();
+    XMFLOAT3 camPos = camPosProp.Get();
+    XMMATRIX view = viewProp.Get();
+    XMMATRIX proj = projProp.Get();
+
+    // [사전패스]
+    ApplyReflection(totalTime, camPos, view, proj);
+    ApplyRefraction(totalTime, camPos, view, proj);
+
+    m_Renderer->SetAlphaBlending(true);
+    m_Renderer->SetDepthBuffer(false);
+
+    m_Renderer->SetBackBufferRenderTarget();
+    m_Renderer->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
+
+    // [메인패스] 메인 씬을 저해상도(혹은 오프스크린) 타겟에 먼저 그림
+    m_Renderer->SetRenderTarget(m_RenderTexture->GetLowResRT(), 0.0f, 0.0f, 0.0f, 1.0f);
+    m_Renderer->SetAlphaBlending(true);
+    m_Renderer->SetDepthBuffer(false);
+    // 스카이
+    DrawSky(context, totalTime, camPos, view, proj);
+
+    if (m_isWireframe)
+        m_Renderer->SetWireframeMode();
+    else
+        m_Renderer->SetSolidMode();
+
+    // 오션
+    // Back-face Culling
+    m_Renderer->SetDepthBuffer(true);
+    DrawOcean(context, totalTime, camPos, view, proj);
+
+    // 구름
+    m_Renderer->SetAlphaBlending(true);
+    m_Renderer->SetWrapSampler(0);
+    DrawCloud(context, totalTime, camPos, view, proj);
+
+    // [후처리 패스]
+    m_Renderer->SetBackBufferRenderTarget();
+    m_Renderer->SetAlphaBlending(false);
+    ApplyLensFlare(context, view, proj, camPos);
+    ApplyBicubicUpscale(context);
+
+    m_Renderer->ClearShaderResources(0);
+    m_Renderer->SetDepthBuffer(true);
+
+    m_frameCount++;
+} // Draw
+
+
 void RenderingEngine::DrawSky(ID3D11DeviceContext* context,
     float totalTime, XMFLOAT3 camPos, XMMATRIX view, XMMATRIX proj)
 {
@@ -197,8 +249,7 @@ void RenderingEngine::DrawSky(ID3D11DeviceContext* context,
     m_ShaderManager->UpdateGlobalBuffer(ShaderKeys::Sky,
         context, totalTime, (float)m_frameCount, camPos);
     m_ShaderManager->UpdateMatrixBuffer(ShaderKeys::Sky, context, skyModel, view, proj);
-    m_ShaderManager->UpdateLightBuffer(ShaderKeys::Sky, context, m_Sun.get());
-
+    m_ShaderManager->UpdateLightBuffer(ShaderKeys::Sky, context, m_Sun.get(), m_Sun->GetModelUV(view, proj));
 
     SkyBuffer skyData;
     m_ShaderManager->UpdateSkyBuffer(context, skyData);
@@ -213,24 +264,23 @@ void RenderingEngine::DrawOcean(ID3D11DeviceContext* context,
     float totalTime, XMFLOAT3 camPos, XMMATRIX view, XMMATRIX proj)
 {
     using namespace ConstantHelper;
-    float waterHeight = -10.0f;
+    float waterHeight = -2.0f;
 
-    m_Renderer->SetReflectionShaderResource(0); // t0: Reflection
-    m_Renderer->SetRefractionShaderResource(1); // t1: Refraction
-    m_TexturesManager->PSSetShaderResources(context, ConstantHelper::WATER_PATH, 2); // t2: Normal
+    m_RenderTexture->SetReflectionSRV(context, 0); // t0
+    m_RenderTexture->SetRefractionSRV(context, 1); // t1
+    m_TexturesManager->PSSetShaderResources(context, ConstantHelper::WATER_PATH, 2); // t2
 
     m_Renderer->SetWrapSampler(0);
 
     m_ShaderManager->UpdateGlobalBuffer(ShaderKeys::Water, context, totalTime, (float)m_frameCount, camPos);
 
     WaterBuffer waterData;
-    waterData.waterTranslation = totalTime * 0.02f;
+    waterData.waterTranslation = totalTime * 0.1f;
     waterData.reflectRefractScale = 0.01f;
     m_ShaderManager->UpdateWaterBuffer(context, waterData);
 
-    // 반사 행렬 업데이트
-    XMMATRIX reflectMatrix = CalculateReflectionMatrix(camPos, waterHeight);
-    m_ShaderManager->UpdateWaterReflectionMatrix(context, reflectMatrix);
+    XMMATRIX reflectView = MathHelper::GetReflectionMatrixFromPlane(camPos, waterHeight) * view;
+    m_ShaderManager->UpdateWaterReflectionMatrix(context, reflectView);
 
     m_Ocean->SetPosition(XMFLOAT3(camPos.x, waterHeight, camPos.z));
     m_Ocean->SetScale(500.0f, 1.0f, 500.0f);
@@ -239,13 +289,13 @@ void RenderingEngine::DrawOcean(ID3D11DeviceContext* context,
     m_ShaderManager->SetShaders(ShaderKeys::Water, context);
     m_ShaderManager->SetConstantBuffers(ShaderKeys::Water, context);
 
-    m_Renderer->SetMode(false, false);
+    m_Renderer->SetCullNoneMode();
     m_Ocean->Render(context);
-    m_Renderer->SetMode(false, true);
+    m_Renderer->SetSolidMode();
 
     // 리소스 정리
-    m_Renderer->ClearShaderResources(0);
-    m_Renderer->ClearShaderResources(1);
+    m_RenderTexture->ClearShaderResources(context, 0);
+    m_RenderTexture->ClearShaderResources(context, 1);
     m_Renderer->ClearShaderResources(2);
 } // DrawOcean
 
@@ -288,10 +338,43 @@ void RenderingEngine::DrawCloud(ID3D11DeviceContext* context,
 } // DrawCloud
 
 
+void RenderingEngine::ApplyReflection(float totalTime, XMFLOAT3 camPos, XMMATRIX view, XMMATRIX proj)
+{
+    ID3D11DeviceContext* context = m_Renderer->GetDeviceContext();
+    float waterHeight = -2.0f;
+
+    m_Renderer->SetRenderTarget(m_RenderTexture->GetReflectionRT(), 0.0f, 0.0f, 0.0f, 1.0f);
+
+    // 반사 카메라 위치 및 뷰 행렬 계산
+    XMFLOAT3 reflectCamPos = camPos;
+    reflectCamPos.y = -camPos.y + (waterHeight * 2.0f);
+    XMMATRIX reflectView = MathHelper::GetReflectionMatrixFromPlane(camPos, waterHeight) * view;
+
+    m_Renderer->SetAlphaBlending(true);
+    m_Renderer->SetDepthBuffer(false);
+
+    m_Renderer->SetCullNoneMode();
+    DrawSky(context, totalTime, reflectCamPos, reflectView, proj);
+    m_Renderer->SetSolidMode();
+} // ApplyReflection
+
+
+void RenderingEngine::ApplyRefraction(float totalTime, XMFLOAT3 camPos, XMMATRIX view, XMMATRIX proj)
+{
+    ID3D11DeviceContext* context = m_Renderer->GetDeviceContext();
+
+    // 굴절용 렌더 타겟 설정
+    m_Renderer->SetRenderTarget(m_RenderTexture->GetRefractionRT(), 0.0f, 0.0f, 0.0f, 1.0f);
+
+    m_Renderer->SetDepthBuffer(true);
+    m_Renderer->SetAlphaBlending(false);
+} // ApplyRefraction
+
+
 void RenderingEngine::ApplyBicubicUpscale(ID3D11DeviceContext* context)
 {
     m_ShaderManager->SetShaders(ShaderKeys::Bicubic, context);
-    m_Renderer->SetLowResolutionShaderResources(0);
+    m_RenderTexture->SetLowResolutionSRV(context, 0);
 
     m_Renderer->SetWrapSampler(0);
 
@@ -300,8 +383,7 @@ void RenderingEngine::ApplyBicubicUpscale(ID3D11DeviceContext* context)
         XMMatrixIdentity(), XMMatrixIdentity(), XMMatrixIdentity());
 
     m_Quad->Render(context);
-
-    m_Renderer->ClearShaderResources(0);
+    m_RenderTexture->ClearShaderResources(context, 0);
 } // ApplyBicubicUpscale
 
 
@@ -316,65 +398,23 @@ void RenderingEngine::ApplyLensFlare(ID3D11DeviceContext* context,
 
     // 버퍼
     LenFlareBuffer lensFlareBuffer;
-    lensFlareBuffer.sunUV = CalculateSunUV(view, proj);
-    lensFlareBuffer.lensMatrix = CalculateLensMatrix(view);
+    lensFlareBuffer.sunUV = m_Sun->GetModelUV(view, proj);
+    lensFlareBuffer.lensMatrix = MathHelper::GetUVRotationMatrix(view);
 
     m_ShaderManager->UpdateLensFlareBuffer(context, lensFlareBuffer);
     m_ShaderManager->SetConstantBuffers(ShaderKeys::LensFlare, context);
 
     // 리소스
-    m_Renderer->SetLowResolutionShaderResources(0);
+    m_RenderTexture->SetLowResolutionSRV(context, 0);
     m_TexturesManager->PSSetShaderResources(context, ConstantHelper::NOISE_PATH, 1);
     m_Renderer->SetMainDepthShaderResource(2);
 
     m_Quad->Render(context);
 
-    m_Renderer->ClearShaderResources(0);
+    m_RenderTexture->ClearShaderResources(context, 0);
     m_Renderer->ClearShaderResources(1);
     m_Renderer->ClearShaderResources(2);
 
     m_Renderer->SetAlphaBlending(true);
 } // ApplyLensFlare
 
-
-XMFLOAT2 RenderingEngine::CalculateSunUV(const XMMATRIX& view, const XMMATRIX& proj)
-{
-    using namespace ConstantHelper;
-
-    XMVECTOR sunWorldPos = XMLoadFloat3(&m_Sun->GetPosition());
-
-    XMVECTOR localSunPos = XMVector3TransformCoord(sunWorldPos, view);
-    if (XMVectorGetZ(localSunPos) < 0.0f)
-    {
-        return XMFLOAT2(-1.0f, -1.0f);
-    }
-
-    XMVECTOR sunScreenPos = XMVector3Project(sunWorldPos, 0, 0,
-        SCREEN_WIDTH, SCREEN_HEIGHT, 0, 1,
-        proj, view, XMMatrixIdentity());
-
-    return XMFLOAT2(
-        XMVectorGetX(sunScreenPos) / (float)SCREEN_WIDTH,
-        XMVectorGetY(sunScreenPos) / (float)SCREEN_HEIGHT
-    );
-} // CalculateSunUV
-
-
-XMMATRIX RenderingEngine::CalculateLensMatrix(const XMMATRIX& view)
-{
-    float m00 = XMVectorGetX(view.r[0]);
-    float m01 = XMVectorGetY(view.r[0]);
-    float camRot = atan2(m01, m00);
-
-    return XMMatrixTranspose(MathHelper::TransformUVRotationMatrix(camRot));
-} // CalculateLensMatrix
-
-
-XMMATRIX RenderingEngine::CalculateReflectionMatrix(XMFLOAT3 camPos, float waterHeight)
-{
-    float reflectionY = -camPos.y + (waterHeight * 2.0f);
-    XMVECTOR reflectionPos = XMVectorSet(camPos.x, reflectionY, camPos.z, 1.0f);
-    XMMATRIX reflectionMatrix = XMMatrixReflect(XMVectorSet(0, 1, 0, -waterHeight));
-
-    return reflectionMatrix;
-} // CalculateReflectionMatrix

@@ -4,6 +4,8 @@
 #include "Position.h"
 // Model
 #include "DefaultModelBuffer.h"
+// Common
+#include "ConstantHelper.h"
 
 
 Light::Light()
@@ -98,3 +100,26 @@ DirectX::XMMATRIX Light::GetModelMatrix()
 {
     return m_Position->GetWorldMatrix();
 } // GetModelMatrix
+
+
+DirectX::XMFLOAT2 Light::GetModelUV(const DirectX::XMMATRIX& view, const DirectX::XMMATRIX& proj)
+{
+    using namespace ConstantHelper;
+
+    XMVECTOR worldPos = XMLoadFloat3(&m_Position->GetPosition());
+
+    XMVECTOR localSunPos = XMVector3TransformCoord(worldPos, view);
+    if (XMVectorGetZ(localSunPos) < 0.0f)
+    {
+        return XMFLOAT2(-1.0f, -1.0f);
+    }
+
+    XMVECTOR screenPos = XMVector3Project(worldPos, 0, 0,
+        SCREEN_WIDTH, SCREEN_HEIGHT, 0, 1,
+        proj, view, XMMatrixIdentity());
+
+    return XMFLOAT2(
+        XMVectorGetX(screenPos) / (float)SCREEN_WIDTH,
+        XMVectorGetY(screenPos) / (float)SCREEN_HEIGHT
+    );
+} // GetNDCModelUV

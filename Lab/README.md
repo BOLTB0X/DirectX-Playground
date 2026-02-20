@@ -549,6 +549,8 @@ DirectX 11에서  `ID3D11Buffer`  **인터페이스로 캡슐화되며, CPU에�
 
 - [Github (jamesscully) - OpenGL Beach Scene](https://github.com/jamesscully/OpenGL-Beach-Scene)
 
+- [네이버 블로그( 프로그래머의 인생, 강동훈 ) - DirectX 11 : Lake from Habib's Water Shader](https://blog.naver.com/fah204)
+
 ### Ray
 
 - [블로그 참고 - 불륨마칭(maximeheckel)](https://blog.maximeheckel.com/posts/real-time-cloudscapes-with-volumetric-raymarching/)

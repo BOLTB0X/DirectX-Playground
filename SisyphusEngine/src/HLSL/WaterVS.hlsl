@@ -5,10 +5,12 @@ cbuffer MatrixBuffer : register(b0)
     matrix projectionMatrix;
 }; // MatrixBuffer
 
+
 cbuffer ReflectionBuffer : register(b3)
 {
     matrix reflectionMatrix;
 }; // ReflectionBuffer
+
 
 struct VertexInput
 {
@@ -23,6 +25,8 @@ struct PixelInput
     float4 position : SV_POSITION;
     float2 tex : TEXCOORD0;
     float4 reflectionPosition : TEXCOORD1;
+    float4 refractionPosition : TEXCOORD2;
+    float4 worldPosition : TEXCOORD3;
 }; // PixelInput
 
 
@@ -39,7 +43,10 @@ PixelInput main(VertexInput input)
     output.tex = input.tex;
 
     float4 worldPos = mul(input.position, worldMatrix);
+    output.worldPosition = worldPos;
     float4 reflectViewPos = mul(worldPos, reflectionMatrix);
     output.reflectionPosition = mul(reflectViewPos, projectionMatrix);
+    output.refractionPosition = output.position;
+    
     return output;
 } // main

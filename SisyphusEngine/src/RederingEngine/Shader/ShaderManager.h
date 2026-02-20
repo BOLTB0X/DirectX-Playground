@@ -62,7 +62,7 @@ public:
     void UpdateGlobalBuffer(const std::string, ID3D11DeviceContext*,
         float, float, DirectX::XMFLOAT3);
     void UpdateLightBuffer(const std::string, ID3D11DeviceContext*,
-        Light*);
+        Light*, DirectX::XMFLOAT2);
     void UpdateCloudBuffer(ID3D11DeviceContext*, const CloudBuffer&);
     void UpdateSkyBuffer(ID3D11DeviceContext*, const SkyBuffer&);
     void UpdateLensFlareBuffer(ID3D11DeviceContext*, const LenFlareBuffer&);

@@ -102,15 +102,16 @@ void SkyShader::SetConstantBuffers(ID3D11DeviceContext* context)
 } // SetConstantBuffers
 
 
-bool SkyShader::UpdateLightBuffer(ID3D11DeviceContext* context, Light* light)
+bool SkyShader::UpdateLightBuffer(ID3D11DeviceContext* context, Light* light, DirectX::XMFLOAT2 uv)
 {
     D3D11_MAPPED_SUBRESOURCE mapped;
     if (FAILED(context->Map(m_lightBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) return false;
 
     LightBuffer* data = (LightBuffer*)mapped.pData;
     data->direction = light->GetPosition();
-    data->color = light->GetColor();
     data->intensity = light->GetIntensity();
+    data->color = light->GetColor();
+    data->lightUV = uv;
 
     context->Unmap(m_lightBuffer.Get(), 0);
     return true;

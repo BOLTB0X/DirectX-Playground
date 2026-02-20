@@ -161,21 +161,40 @@ namespace MathHelper { // 벡터 연산
 
     inline DirectX::XMFLOAT3 VectorToRotation(DirectX::XMFLOAT3 vec)
     {
-        using namespace DirectX;
-
         float pitch = -asinf(clamp<float>(vec.y, -1.0f, 1.0f));
         float yaw = atan2f(vec.x, vec.z);
 
-        return XMFLOAT3(XMConvertToDegrees(pitch), XMConvertToDegrees(yaw), 0.0f);
+        return DirectX::XMFLOAT3(DirectX::XMConvertToDegrees(pitch), DirectX::XMConvertToDegrees(yaw), 0.0f);
     } // VectorToRotation
 
 
     inline DirectX::XMMATRIX TransformUVRotationMatrix(float radians)
     {
+        return DirectX::XMMatrixTranslation(-0.5f, -0.5f, 0.0f) * DirectX::XMMatrixRotationZ(radians) * DirectX::XMMatrixTranslation(0.5f, 0.5f, 0.0f);
+    } // TransformUVRotationMatrix
+
+
+    inline DirectX::XMMATRIX GetUVRotationMatrix(const DirectX::XMMATRIX& view)
+    {
         using namespace DirectX;
-        return XMMatrixTranslation(-0.5f, -0.5f, 0.0f) * XMMatrixRotationZ(radians) * XMMatrixTranslation(0.5f, 0.5f, 0.0f);
-        // TransfromUVRotationMatrix
-    }
+
+        float m00 = XMVectorGetX(view.r[0]);
+        float m01 = XMVectorGetY(view.r[0]);
+        float camRot = atan2(m01, m00);
+
+        return XMMatrixTranspose(TransformUVRotationMatrix(camRot));
+    } // GetUVRotationMatrix
+
+
+    inline DirectX::XMMATRIX GetReflectionMatrixFromPlane(DirectX::XMFLOAT3 camPos, float height)
+    {
+        using namespace DirectX;
+        float reflectionY = -camPos.y + (height * 2.0f);
+        XMVECTOR reflectionPos = XMVectorSet(camPos.x, reflectionY, camPos.z, 1.0f);
+        XMMATRIX reflectionMatrix = XMMatrixReflect(XMVectorSet(0, 1, 0, -height));
+
+        return reflectionMatrix;
+    } // GetReflectionMatrixFromPlane
     
 } // 벡터 연산
 

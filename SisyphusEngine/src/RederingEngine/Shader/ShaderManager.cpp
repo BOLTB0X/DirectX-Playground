@@ -96,14 +96,14 @@ void ShaderManager::UpdateGlobalBuffer(
 
 
 void ShaderManager::UpdateLightBuffer(const std::string key,
-    ID3D11DeviceContext* context, Light* light)
+    ID3D11DeviceContext* context, Light* light, DirectX::XMFLOAT2 uv)
 {
     auto it = m_shaders.find(key);
     if (it == m_shaders.end()) return;
 
     Shader* shader = it->second.get();
     if (shader->GetShaderType() == ShaderType::Sky)
-        static_cast<SkyShader*>(shader)->UpdateLightBuffer(context, light);
+        static_cast<SkyShader*>(shader)->UpdateLightBuffer(context, light, uv);
 } // UpdateLightBuffer
 
 

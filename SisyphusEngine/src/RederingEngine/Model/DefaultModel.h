@@ -15,6 +15,8 @@ public:
 
 public:
     DirectX::XMMATRIX GetModelMatrix();
+    DirectX::XMFLOAT2 GetModelUV(const DirectX::XMMATRIX&, const DirectX::XMMATRIX&);
+    
     void SetPosition(DirectX::XMFLOAT3);
     void SetScale(float);
     void SetScale(float, float, float);

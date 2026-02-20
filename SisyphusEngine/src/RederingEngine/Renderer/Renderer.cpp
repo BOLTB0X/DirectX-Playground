@@ -20,9 +20,6 @@ Renderer::Renderer()
     m_DisplayInfo = std::make_unique<DisplayInfo>();
     m_DX11Device = std::make_unique<DX11Device>();
     m_MainRenderTarget = std::make_unique<RenderTarget>();
-    m_LowResRenderTarget = std::make_unique<RenderTarget>();
-	m_ReflectionRT = std::make_unique<RenderTarget>();
-	m_RefractionRT = std::make_unique<RenderTarget>();
     m_Rasterizer = std::make_unique<Rasterizer>();
     m_DepthStencilState = std::make_unique<DepthStencilState>();
     m_BlendState = std::make_unique<BlendState>();
@@ -56,22 +53,6 @@ bool Renderer::Init(HWND hwnd, bool vsync)
         m_DX11Device->GetSwapChain(),
         SCREEN_WIDTH, SCREEN_HEIGHT)
         == false)
-        return false;
-
-    if (m_LowResRenderTarget->Init(
-        m_DX11Device->GetDevice(),
-        SCREEN_WIDTH, SCREEN_HEIGHT)
-        == false)
-        return false;
-
-    if (m_ReflectionRT->Init(
-        m_DX11Device->GetDevice(),
-        SCREEN_WIDTH, SCREEN_HEIGHT) == false)
-        return false;
-
-    if (m_RefractionRT->Init(
-        m_DX11Device->GetDevice(),
-        SCREEN_WIDTH, SCREEN_HEIGHT) == false)
         return false;
 
     // 각종 파이프라인 상태 객체 초기화
@@ -126,8 +107,6 @@ void Renderer::Shutdown()
     if (m_BlendState) m_BlendState.reset();
     if (m_DepthStencilState) m_DepthStencilState.reset();
     if (m_Rasterizer) m_Rasterizer.reset();
-    if (m_ReflectionRT) m_ReflectionRT.reset();
-    if (m_RefractionRT) m_RefractionRT.reset();
     if (m_MainRenderTarget) m_MainRenderTarget.reset();
     if (m_DX11Device) m_DX11Device.reset();
     if (m_DisplayInfo) m_DisplayInfo.reset();
@@ -185,23 +164,6 @@ void Renderer::SetBorderSampler(UINT slot)
 } // SetBorderSampler
 
 
-void Renderer::SetLowResolutionRenderTarget()
-{
-    ID3D11DeviceContext* context = m_DX11Device->GetDeviceContext();
-    ClearShaderResources(0);
-
-    m_LowResRenderTarget->Clear(context, 0, 0, 0, 1);
-} // SetLowResolutionRenderTarget
-
-
-void Renderer::SetLowResolutionShaderResources(UINT slot)
-{
-    ID3D11DeviceContext* context = m_DX11Device->GetDeviceContext();
-    auto lowResSRV  = m_LowResRenderTarget->GetSRV();
-    context->PSSetShaderResources(slot, 1, &lowResSRV);
-} // SetLowResolutionShaderResources
-
-
 void Renderer::SetAdditiveAlphaBlending()
 {
     m_BlendState->SetAdditiveBlendState(m_DX11Device->GetDeviceContext());
@@ -236,20 +198,22 @@ void Renderer::SetRenderTarget(RenderTarget* target, float r, float g, float b, 
 } // SetRenderTarget
 
 
-void Renderer::SetReflectionShaderResource(UINT slot)
+void Renderer::SetWireframeMode()
 {
-    ID3D11DeviceContext* context = m_DX11Device->GetDeviceContext();
-    auto srv = m_ReflectionRT->GetSRV();
-    context->PSSetShaderResources(slot, 1, &srv);
-} // SetReflectionShaderResource
+    m_Rasterizer->SetWireframeState(m_DX11Device->GetDeviceContext());
+} // SetWireframeMode
 
 
-void Renderer::SetRefractionShaderResource(UINT slot)
+void Renderer::SetSolidMode()
 {
-    ID3D11DeviceContext* context = m_DX11Device->GetDeviceContext();
-    auto srv = m_RefractionRT->GetSRV();
-    context->PSSetShaderResources(slot, 1, &srv);
-} // SetRefractionShaderResource
+    m_Rasterizer->SetSolidState(m_DX11Device->GetDeviceContext());
+} // SetSolidMode
+
+
+void Renderer::SetCullNoneMode()
+{
+    m_Rasterizer->SetNoCullingState(m_DX11Device->GetDeviceContext());
+} // SetCullNoneMode
 
 
 ID3D11Device* Renderer::GetDevice() const
@@ -262,15 +226,3 @@ ID3D11DeviceContext* Renderer::GetDeviceContext() const
 {
     return m_DX11Device->GetDeviceContext();
 } // GetDeviceContext
-
-
-RenderTarget* Renderer::GetReflectionRT() const
-{
-    return m_ReflectionRT.get();
-} // GetReflectionRT
-
-
-RenderTarget* Renderer::GetRefractionRT() const
-{
-    return m_RefractionRT.get();
-} // GetRefractionRT
