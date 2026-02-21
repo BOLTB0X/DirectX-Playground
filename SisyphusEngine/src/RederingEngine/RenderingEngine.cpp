@@ -35,6 +35,7 @@ RenderingEngine::RenderingEngine()
     m_Sky = std::make_unique<DefaultModel>();
     m_Sun = std::make_unique<Light>();
     m_Ocean = std::make_unique<DefaultModel>();
+    m_BuffersManager = std::make_unique<ShaderBuffersManager>();
 } // RenderingEngine
 
 
@@ -75,12 +76,13 @@ bool RenderingEngine::Init(HWND hwnd)
         m_Renderer->GetDevice(), DefaultModelType::Sphere) == false)
         return false;
 
+    m_Sun->Init(ConstantHelper::LightPosition, ConstantHelper::LightColor, ConstantHelper::LightIntensity);
+
     if (m_Ocean->Init(
         m_Renderer->GetDevice(), DefaultModelType::Ocean) == false)
 		return false;
 
-    m_Sun->Init(ConstantHelper::LightPosition, ConstantHelper::LightColor, ConstantHelper::LightIntensity);
-
+    //m_BuffersManager->Init();
     return true;
 } // Init
 
@@ -244,14 +246,14 @@ void RenderingEngine::DrawSky(ID3D11DeviceContext* context,
 {
     using namespace ConstantHelper;
 
-    XMMATRIX skyModel = XMMatrixTranslation(camPos.x, camPos.y, camPos.z);
-
+    m_Sky->SetPosition(camPos);
     m_ShaderManager->UpdateGlobalBuffer(ShaderKeys::Sky,
         context, totalTime, (float)m_frameCount, camPos);
-    m_ShaderManager->UpdateMatrixBuffer(ShaderKeys::Sky, context, skyModel, view, proj);
+    m_ShaderManager->UpdateMatrixBuffer(ShaderKeys::Sky, context, m_Sky->GetModelMatrix(), view, proj);
     m_ShaderManager->UpdateLightBuffer(ShaderKeys::Sky, context, m_Sun.get(), m_Sun->GetModelUV(view, proj));
 
-    SkyBuffer skyData;
+    //SkyBuffer skyData;
+    auto& skyData = m_BuffersManager->GetBuffer<SkyBuffer>(ShaderBufferKeys::Sky);
     m_ShaderManager->UpdateSkyBuffer(context, skyData);
     m_ShaderManager->SetShaders(ShaderKeys::Sky, context);
     m_ShaderManager->SetConstantBuffers(ShaderKeys::Sky, context);
@@ -274,7 +276,7 @@ void RenderingEngine::DrawOcean(ID3D11DeviceContext* context,
 
     m_ShaderManager->UpdateGlobalBuffer(ShaderKeys::Water, context, totalTime, (float)m_frameCount, camPos);
 
-    WaterBuffer waterData;
+    auto& waterData = m_BuffersManager->GetBuffer<WaterBuffer>(ShaderBufferKeys::Water);
     waterData.waterTranslation = totalTime * 0.1f;
     waterData.reflectRefractScale = 0.01f;
     m_ShaderManager->UpdateWaterBuffer(context, waterData);
@@ -311,7 +313,8 @@ void RenderingEngine::DrawCloud(ID3D11DeviceContext* context,
     m_ShaderManager->UpdateGlobalBuffer(ShaderKeys::Cloud,
         context, totalTime, (float)m_frameCount, camPos);
 
-    CloudBuffer cloudData((float)ConstantHelper::cloudType);
+
+    auto& cloudData = m_BuffersManager->GetBuffer<CloudBuffer>(ShaderBufferKeys::Cloud);
 
     m_ShaderManager->UpdateCloudBuffer(context, cloudData);
 
@@ -325,7 +328,6 @@ void RenderingEngine::DrawCloud(ID3D11DeviceContext* context,
     else
     {
         m_Cloud->SetPosition(XMFLOAT3(camPos.x, camPos.y + 1, camPos.z));
-        XMMATRIX cloudModel = XMMatrixTranslation(camPos.x, camPos.y, camPos.z);
         m_ShaderManager->UpdateMatrixBuffer(ShaderKeys::Cloud, context, m_Cloud->GetModelMatrix(), view, proj);
     }
     m_ShaderManager->SetShaders(ShaderKeys::Cloud, context);
@@ -397,7 +399,8 @@ void RenderingEngine::ApplyLensFlare(ID3D11DeviceContext* context,
     m_Renderer->SetBorderSampler(0);
 
     // 버퍼
-    LenFlareBuffer lensFlareBuffer;
+    //LensFlareBuffer lensFlareBuffer;
+    auto& lensFlareBuffer = m_BuffersManager->GetBuffer<LensFlareBuffer>(ShaderBufferKeys::LensFlare);
     lensFlareBuffer.sunUV = m_Sun->GetModelUV(view, proj);
     lensFlareBuffer.lensMatrix = MathHelper::GetUVRotationMatrix(view);
 

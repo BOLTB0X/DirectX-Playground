@@ -20,4 +20,13 @@
 #include <unordered_map>
 #include <algorithm>
 
+// Common
+#include "ConstantHelper.h"
+#include "DebugHelper.h"
+#include "MathHelper.h"
+#include "PropertyHelper.h"
+
+// Rendering
+#include "Shader/ShaderBuffers.h"
+
 using namespace DirectX;

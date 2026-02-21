@@ -3,6 +3,8 @@
 #include "StatsWidget.h"
 #include "CameraWidget.h"
 #include "RenderStateWidget.h"
+#include "ShaderBufferWidget.h"
+#include "ShaderBufferImGuiDrawer.h"
 // Framework
 #include "IWidget.h"
 // imgui
@@ -23,7 +25,6 @@ UI::UI()
 
 UI::~UI() 
 {
-    //Shutdown();
 } // ~UI
 
 
@@ -82,7 +83,8 @@ void UI::AddWidget(std::unique_ptr<IWidget> widget)
 {
     m_widgets.push_back(std::move(widget));
     return;
-} // AddWidget
+} // 
+
 
 void UI::CreateWidget(
     Property<float> timeProp, Property<int> fpsProp,
@@ -97,7 +99,47 @@ void UI::CreateWidget(
     AddWidget(std::make_unique<CameraWidget>("Camera Controller", posProp, rotProp, fovProp));
 
     AddWidget(std::make_unique<RenderStateWidget>("Render Settings", wire, back, depth));
-}
+} // CreateWidget
+
+
+void UI::CreateWidget(PropertyHelper::Property<WaterBuffer> prop)
+{
+    AddWidget(std::make_unique<ShaderBufferWidget<WaterBuffer>>(
+        "Water Settings",
+        prop,
+        ShaderBufferImGuiDrawer::DrawWater
+    ));
+} // CreateWidget (Water)
+
+
+void UI::CreateWidget(PropertyHelper::Property<CloudBuffer> prop)
+{
+    AddWidget(std::make_unique<ShaderBufferWidget<CloudBuffer>>(
+        "Cloud Settings",
+        prop,
+        ShaderBufferImGuiDrawer::DrawCloud
+    ));
+} // CreateWidget (Cloud)
+
+
+void UI::CreateWidget(PropertyHelper::Property<SkyBuffer> prop)
+{
+    AddWidget(std::make_unique<ShaderBufferWidget<SkyBuffer>>(
+        "Sky Settings",
+        prop,
+        ShaderBufferImGuiDrawer::DrawSky
+    ));
+} // CreateWidget (Sky)
+
+
+void UI::CreateWidget(PropertyHelper::Property<LensFlareBuffer> prop)
+{
+    AddWidget(std::make_unique<ShaderBufferWidget<LensFlareBuffer>>(
+        "Lens Flare Settings",
+        prop,
+        ShaderBufferImGuiDrawer::DrawLensFlare
+    ));
+} // CreateWidget (LensFlare)
 
 
 void UI::ToggleWidget()

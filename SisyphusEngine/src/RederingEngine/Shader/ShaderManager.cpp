@@ -127,7 +127,7 @@ void ShaderManager::UpdateSkyBuffer(ID3D11DeviceContext* context, const SkyBuffe
 } // UpdateSkyBuffer
 
 
-void ShaderManager::UpdateLensFlareBuffer(ID3D11DeviceContext* context, const LenFlareBuffer& data)
+void ShaderManager::UpdateLensFlareBuffer(ID3D11DeviceContext* context, const LensFlareBuffer& data)
 {
     auto* shader = GetShader<LensFlareShader>(ShaderKeys::LensFlare);
     if (shader)

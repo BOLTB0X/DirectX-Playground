@@ -8,13 +8,14 @@
 #include "InputManager.h"
 // UI
 #include "UI.h"
+#include "ShaderBufferWidget.h"
 // Common
 #include "ConstantHelper.h"
 #include "DebugHelper.h"
 #include "PropertyHelper.h"
 // Rendering
 #include "RenderingEngine.h"
-
+#include "Shader/ShaderBuffersManager.h"
 
 using namespace PropertyHelper;
 using namespace DirectX;
@@ -178,4 +179,10 @@ void MainEngine::CreateWidget()
     m_UI->CreateWidget(timeProp, fpsProp,
         camPosProp, camRotProp, camFovProp,
         wireProp, backProp, depthProp);
+
+    m_UI->CreateWidget(m_RenderingEngine->DeliveryBuffer<WaterBuffer>(ShaderBufferKeys::Water));
+    m_UI->CreateWidget(m_RenderingEngine->DeliveryBuffer<CloudBuffer>(ShaderBufferKeys::Cloud));
+    m_UI->CreateWidget(m_RenderingEngine->DeliveryBuffer<SkyBuffer>(ShaderBufferKeys::Sky));
+    m_UI->CreateWidget(m_RenderingEngine->DeliveryBuffer<LensFlareBuffer>(ShaderBufferKeys::LensFlare));
+
 } // CreateWidget

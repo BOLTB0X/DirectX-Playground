@@ -4,6 +4,19 @@
 #include "ConstantHelper.h"
 
 
+namespace ShaderBufferKeys {
+    const std::string Global = "Global";
+    const std::string Matrix = "Matrix";
+    const std::string Cloud = "Cloud";
+    const std::string Bicubic = "Bicubic";
+    const std::string Sky = "Sky";
+    const std::string LensFlare = "LensFlare";
+    const std::string Water = "Water";
+    const std::string Light = "Light";
+    const std::string Refraction = "Refraction";
+} // ShaderBufferKeys
+
+
 struct GlobalBuffer {
     // Row 1
     float iTime;
@@ -36,6 +49,15 @@ struct LightBuffer {
     // Row 3
     DirectX::XMFLOAT2 lightUV;
     DirectX::XMFLOAT2 padding;
+
+    LightBuffer()
+    {
+        direction = ConstantHelper::LightPosition;
+        intensity = ConstantHelper::LightIntensity;
+        color = ConstantHelper::LightColor;
+        lightUV = { 0.5f, 0.5f };
+        padding = { 0.0f, 0.0f };
+    }
 
 
     LightBuffer(DirectX::XMFLOAT3 _direction, float _intensity,
@@ -94,6 +116,42 @@ struct CloudBuffer {
     // Row 9
     int fbmOctaves;
     DirectX::XMFLOAT3 padding;
+
+    CloudBuffer()
+    {
+        baseColor = { 1.0f, 1.0f, 1.0f };
+        iCloudType = 1.0f;
+        ambient = { 0.25f, 0.25f, 0.25f };
+        shadowColor = { 0.02f, 0.08f, 0.25f };
+        maxSteps = 100.0f;
+        marchSize = 0.08f;
+
+        radius = 2.0f;
+        height = 1.0f;
+        thickness = 2.0f;
+        noiseRes = 256.0f;
+
+        densityScale = 0.4f;
+        falloffScale = 0.1f;
+        mieIntensity = 3.0f; // 전방 산란 밝기
+        miePower = 15.0f; // 전방 산란 날카로움
+
+        diffusePower = 2.0f;
+        lightMultiply = 4.0f;
+        shadowDist = 0.4f;
+        maxDepth = 50.0f;
+
+        windDir = { 1.0f, -0.2f, -1.0f };
+        cloudSpeed = 0.5f;
+
+        fbmScale = 0.5f;
+        fbmFactor = 2.02f;
+        fbmIncrement = 0.21f;
+        fbmPersistance = 0.5f;
+        fbmOctaves = 6;
+
+        padding = { 0.0f, 0.0f, 0.0f };
+    }
 
     CloudBuffer(float cloudType)
         : iCloudType(cloudType)
@@ -199,7 +257,7 @@ struct ThresholdBuffer {
 }; // ThresholdBuffer
 
 
-struct LenFlareBuffer {
+struct LensFlareBuffer {
     // Row 1: 기본 고스트 제어
     int   count;
     float spacing;
@@ -260,7 +318,7 @@ struct LenFlareBuffer {
     // Row 14~17: 행렬
     DirectX::XMMATRIX lensMatrix;
 
-    LenFlareBuffer()
+    LensFlareBuffer()
     {
         // 기본 제어
         count = 8;
@@ -307,7 +365,7 @@ struct LenFlareBuffer {
 
         lensMatrix = DirectX::XMMatrixIdentity();
     }
-}; // LenFlareBuffer
+}; // LensFlareBuffer
 
 
 struct WaterBuffer {

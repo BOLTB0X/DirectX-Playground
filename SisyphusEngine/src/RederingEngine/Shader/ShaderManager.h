@@ -65,7 +65,7 @@ public:
         Light*, DirectX::XMFLOAT2);
     void UpdateCloudBuffer(ID3D11DeviceContext*, const CloudBuffer&);
     void UpdateSkyBuffer(ID3D11DeviceContext*, const SkyBuffer&);
-    void UpdateLensFlareBuffer(ID3D11DeviceContext*, const LenFlareBuffer&);
+    void UpdateLensFlareBuffer(ID3D11DeviceContext*, const LensFlareBuffer&);
     void UpdateWaterBuffer(ID3D11DeviceContext*, const WaterBuffer&);
     void UpdateWaterReflectionMatrix(ID3D11DeviceContext*, const DirectX::XMMATRIX&);
     void UpdateRefractionBuffer(ID3D11DeviceContext*, const RefractionBuffer&);

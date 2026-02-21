@@ -1,12 +1,15 @@
 #pragma once
+// STL
 #include <memory>
 #include <vector>
 #include <string>
 #include <DirectXMath.h>
+// Framework
 #include "IImGUI.h"
+// Rendering엔진
+#include "Shader/ShaderBuffers.h"
 // Common
 #include "PropertyHelper.h"
-
 
 class IWidget;
 
@@ -38,6 +41,10 @@ public:
         PropertyHelper::Property<bool>,
         PropertyHelper::Property<bool>,
         PropertyHelper::Property<bool>);
+    void CreateWidget(PropertyHelper::Property<WaterBuffer>);
+    void CreateWidget(PropertyHelper::Property<CloudBuffer>);
+    void CreateWidget(PropertyHelper::Property<SkyBuffer>);
+    void CreateWidget(PropertyHelper::Property<LensFlareBuffer>);
     bool IsWorldClicked(bool mousePressed) const;
 
 public:

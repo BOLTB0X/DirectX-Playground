@@ -2,6 +2,7 @@
 #include <memory>
 #include <windows.h>
 
+
 class Input;
 class Timer;
 class Camera;
