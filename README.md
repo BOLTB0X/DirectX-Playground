@@ -367,38 +367,6 @@
   </table>
 </p>
 
-<p align="center">
-  <table style="width:100%; text-align:center; border-spacing:20px;">
-      <td style="text-align:center; vertical-align:middle;">
-        <p align="center">
-        <img src="https://github.com/BOLTB0X/DirectX11-Draw/blob/main/DemoGIF/volumetric-raymarching/%EB%B3%BC%EB%A5%A8%EB%A7%88%EC%B9%AD06_%EA%B5%AC%EB%A6%84%EC%A7%80%EB%8C%80%EC%99%80%ED%83%9C%EC%96%915%20%EB%8C%80%EA%B8%B0%EC%A4%91%20%EC%82%B0%EB%9E%80%20%EB%B0%8F%20%EA%B8%80%EB%A1%9C%EC%9A%B0%20%ED%9A%A8%EA%B3%BC.gif?raw=true" 
-             alt="image 2" 
-             style="width:600px; height:400px; object-fit:contain; border:1px solid #ddd; border-radius:4px;"/>
-        </p>
-      </td>
-      <td style="text-align:center; vertical-align:middle;">
-        <p align="center">
-        <img src="https://github.com/BOLTB0X/DirectX11-Draw/blob/main/DemoGIF/volumetric-raymarching/%EB%B3%BC%EB%A5%A8%EB%A7%88%EC%B9%AD07_%EB%A0%8C%EC%A6%88%ED%94%8C%EB%A0%88%EC%96%B4%EA%B3%A0%EC%8A%A4%ED%8A%B8.gif?raw=true" 
-             alt="image 2" 
-             style="width:600px; height:400px; object-fit:contain; border:1px solid #ddd; border-radius:4px;"/>
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td style="text-align:center; font-size:14px; font-weight:bold;">
-      <p align="center">
-      <a></a>대기 중 햇 빛산란</a>
-      </p>
-      </td>
-      <td style="text-align:center; font-size:14px; font-weight:bold;">
-      <p align="center">
-      <a></a>렌즈플레어(고스트)</a>
-      </p>
-      </td>
-    </tr>
-  </table>
-</p>
-
 - [시행착오 및 기록물들](https://github.com/BOLTB0X/DirectX11-Draw/tree/main/DemoGIF/volumetric-raymarching)
 
 - [자세한 `src` 폴더 구조 및 코드 설명](https://github.com/BOLTB0X/DirectX11-Draw/tree/Sun-and-Cloud/SisyphusEngine#src)
