@@ -837,6 +837,285 @@
 
 ---
 
+## [Sisyphus Engine : Water (Basic)](https://github.com/BOLTB0X/DirectX11-Draw/tree/Water-Basic/SisyphusEngine)
+
+<p align="center">
+  <table style="width:100%; text-align:center; border-spacing:20px;">
+    <tr>
+        <td style="text-align:center; vertical-align:middle;">
+        <p align="center">
+        <img src="https://github.com/BOLTB0X/DirectX11-Draw/blob/main/DemoGIF/water/%EB%AC%BC03_%EB%B0%B0%EA%B2%BD03_%EC%83%89%EC%83%81%EB%B3%80%EA%B2%BD05.gif?raw=true" 
+             alt="image 2" 
+             style="; object-fit:contain; border:1px solid #ddd; border-radius:4px;"/>
+        </p>
+    </tr>
+    <tr>
+      <td style="text-align:center; font-size:14px; font-weight:bold;">
+      <p align="center">
+      <a></a>노말맵 왜곡을 통한 Water 물결</a>
+      </p>
+      </td>
+    </tr>
+  </table>
+</p>
+
+두 개의 노말맵을 서로 다른 속도로 **이동(UV Animation)** 시키고, 이를 합성하여 얻은 벡터값으로 **굴절(Refraction)** 과 **반사(Reflection)** 를 왜곡시키는 전형적인 실시간 **Water** 렌더링 기법
+
+- feature: **Refraction** , **Reflection** , **LightColumn**
+
+- [자세한 README는 여기 클릭](https://github.com/BOLTB0X/DirectX11-Draw/tree/Water-Basic/SisyphusEngine)
+
+
+<details>
+<summary> Water 셰이더 Buffer / 노말맵 왜곡 </summary>
+
+```cpp
+struct WaterBuffer {
+    // Row 1: 기본 색상 및 기본 변환
+    DirectX::XMFLOAT3 waterBaseColor;
+    float waterTranslation;
+
+    // Row 2: 왜곡 및 파도 설정
+    float reflectRefractScale;
+    float waveLength;
+    float specularShininess;
+    float waterAlpha;
+
+    // Row 3: 바람 설정
+    DirectX::XMFLOAT2 windDirection;
+    float windForce;
+    float finalAlpha;
+
+    // Row 4:스펙큘러 상세 제어
+    float highlightsSize; // 하이라이트 크기
+    float sunColumnWidth; // 빛 기둥 너비
+    float sunColumnInensity; // 빛 기둥 강도
+    float sparkleIntensity; // 물결 자글거림 강도
+
+    WaterBuffer() {
+        waterBaseColor = { 0.1f, 0.15f, 0.2f };
+        waterTranslation = 0.0f;
+        reflectRefractScale = 0.03f;
+        waveLength = 0.5f;
+        specularShininess = 200.0f;
+        waterAlpha = 0.6f;
+        windDirection = { 1.0f, 0.5f };
+        windForce = 0.5f;
+        finalAlpha = 0.9f;
+
+        highlightsSize = 0.05f;
+        sunColumnWidth = 30.0f;
+        sunColumnInensity = 0.5f;
+        sparkleIntensity = 0.1f;
+    }
+}; // WaterBuffer
+```
+
+```cpp
+cbuffer WaterBuffer : register(b4)
+{
+    // Row 1
+    float3 iWaterBaseColor;
+    float iWaterTranslation;
+    
+    // Row 2
+    float iReflectRefractScale;
+    float iWaveLength;
+    float iSpecularShininess;
+    float iWaterAlpha;
+    
+    // Row 3
+    float2 iWindDirection;
+    float iWindForce;
+    float iFinalAlpha;
+    
+    // Row 4
+    float iHighlightsSize;
+    float iSunColumnWidth;
+    float iSunColumnIntensity;
+    float iSparkleIntensity;
+}; // WaterBuffer
+```
+
+```cpp
+// 노말 애니메이션 
+float3 waterNormal(float2 texCoord)
+{
+    // 바람 적용
+    float2 scaledUV = texCoord / iWaveLength;
+    float2 moveOffset = normalize(iWindDirection) * (iWaterTranslation * iWindForce);
+
+    float2 uv1 = scaledUV + moveOffset;
+    float2 uv2 = scaledUV - (moveOffset * 0.5f) + float2(0.1f, 0.1f);
+    
+    float3 n1 = normalTexture.Sample(SampleType, uv1).xyz * 2.0f - 1.0f;
+    float3 n2 = normalTexture.Sample(SampleType, uv2).xyz * 2.0f - 1.0f;
+    
+    return normalize(n1 + n2);
+} // waterNormal
+```
+```cpp
+// 노말 애니메이션 
+float4 main(WaterPixelInput input) : SV_TARGET
+{
+    // ....
+
+    // 노멀 및 왜곡
+    float3 normal = waterNormal(input.tex);
+    float2 distortion = normal.xy * iReflectRefractScale;
+
+    reflectUV = clamp(reflectUV + distortion, 0.001f, 0.999f);
+    refractUV = clamp(refractUV + distortion, 0.001f, 0.999f);
+
+    // 텍스처 샘플링
+    float4 reflectionColor = reflectionTexture.Sample(SampleType, reflectUV);
+    float4 refractionColor = refractionTexture.Sample(SampleType, refractUV);
+
+    // ...
+}
+```
+
+- [`WaterPS.hlsl`](https://github.com/BOLTB0X/DirectX11-Draw/blob/Water-Basic/SisyphusEngine/src/HLSL/WaterPS.hlsl)
+
+- [`RenderingEngine.cpp`](https://github.com/BOLTB0X/DirectX11-Draw/blob/Water-Basic/SisyphusEngine/src/RederingEngine/RenderingEngine.cpp)
+
+- [`ShaderBuffersManager`](https://github.com/BOLTB0X/DirectX11-Draw/blob/Water-Basic/SisyphusEngine/src/RederingEngine/Shader/ShaderBuffersManager.h)
+
+</details>
+
+<details>
+<summary> more 영상 및 설명 </summary>
+
+<p align="center">
+  <table style="width:100%; text-align:center; border-spacing:20px;">
+      <td style="text-align:center; vertical-align:middle;">
+        <p align="center">
+        <img src="https://github.com/BOLTB0X/DirectX11-Draw/blob/main/DemoGIF/water/%EB%AC%BC02_%EB%AC%BC%EA%B2%B002_%EB%AC%BC%EC%95%88%EC%97%90%EC%84%9C%EB%B3%B4%EB%8A%94.gif?raw=true" 
+             alt="image 2" 
+             style="width:600px; height:400px; object-fit:contain; border:1px solid #ddd; border-radius:4px;"/>
+        </p>
+      </td>
+      <td style="text-align:center; vertical-align:middle;">
+        <p align="center">
+        <img src="https://github.com/BOLTB0X/DirectX11-Draw/blob/main/DemoGIF/water/%EB%AC%BC04_windTest.gif?raw=true" 
+             alt="image 2" 
+             style="width:600px; height:400px; object-fit:contain; border:1px solid #ddd; border-radius:4px;"/>
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="text-align:center; font-size:14px; font-weight:bold;">
+      <p align="center">
+      <a></a>물안에서 보는</a>
+      </p>
+      </td>
+      <td style="text-align:center; font-size:14px; font-weight:bold;">
+      <p align="center">
+      <a></a>wind</a>
+      </p>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table style="width:100%; text-align:center; border-spacing:20px;">
+      <td style="text-align:center; vertical-align:middle;">
+        <p align="center">
+        <img src="https://github.com/BOLTB0X/DirectX11-Draw/blob/main/DemoGIF/water/%EB%AC%BC04_%EC%95%8C%ED%8C%8C_%ED%85%8C%EC%8A%A4%ED%8A%B8.gif?raw=true" 
+             alt="image 2" 
+             style="width:600px; height:400px; object-fit:contain; border:1px solid #ddd; border-radius:4px;"/>
+        </p>
+      </td>
+      <td style="text-align:center; vertical-align:middle;">
+        <p align="center">
+        <img src="https://github.com/BOLTB0X/DirectX11-Draw/blob/main/DemoGIF/water/%EB%AC%BC04_waveTest.gif?raw=true" 
+             alt="image 2" 
+             style="width:600px; height:400px; object-fit:contain; border:1px solid #ddd; border-radius:4px;"/>
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="text-align:center; font-size:14px; font-weight:bold;">
+      <p align="center">
+      <a></a>Alpha</a>
+      </p>
+      </td>
+      <td style="text-align:center; font-size:14px; font-weight:bold;">
+      <p align="center">
+      <a></a>wave</a>
+      </p>
+      </td>
+    </tr>
+  </table>
+</p>
+
+<p align="center">
+  <table style="width:100%; text-align:center; border-spacing:20px;">
+      <td style="text-align:center; vertical-align:middle;">
+        <p align="center">
+        <img src="https://github.com/BOLTB0X/DirectX11-Draw/blob/main/DemoGIF/water/%EB%AC%BC04_%EC%84%A0%EA%B8%B0%EB%91%A5_%ED%85%8C%EC%8A%A4%ED%8A%B8.gif?raw=true" 
+             alt="image 2" 
+             style="width:600px; height:400px; object-fit:contain; border:1px solid #ddd; border-radius:4px;"/>
+        </p>
+      </td>
+      <td style="text-align:center; vertical-align:middle;">
+        <p align="center">
+        <img src="https://github.com/BOLTB0X/DirectX11-Draw/blob/main/DemoGIF/water/%EB%AC%BC04_SpecularTest.gif?raw=true" 
+             alt="image 2" 
+             style="width:600px; height:400px; object-fit:contain; border:1px solid #ddd; border-radius:4px;"/>
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="text-align:center; font-size:14px; font-weight:bold;">
+      <p align="center">
+      <a></a>LightColumn</a>
+      </p>
+      </td>
+      <td style="text-align:center; font-size:14px; font-weight:bold;">
+      <p align="center">
+      <a></a>Specular</a>
+      </p>
+      </td>
+    </tr>
+  </table>
+</p>
+
+- [시행착오 및 기록물들](https://github.com/BOLTB0X/DirectX11-Draw/tree/main/DemoGIF/water)
+
+- [자세한 `src` 폴더 구조 및 코드 설명](https://github.com/BOLTB0X/DirectX11-Draw/tree/Water-Basic/SisyphusEngine/src)
+
+    - [파이프라인 - 그래픽](https://github.com/BOLTB0X/DirectX11-Draw/blob/Water-Basic/SisyphusEngine/src/RederingEngine/RenderingEngine.cpp)
+
+    - [파이프라인 - etc](https://github.com/BOLTB0X/DirectX11-Draw/blob/Water-Basic/SisyphusEngine/src/MainEngine/MainEngine.cpp)
+
+    - [Water Vertex Shader](https://github.com/BOLTB0X/DirectX11-Draw/blob/Water-Basic/SisyphusEngine/src/HLSL/WaterVS.hlsl)
+
+    - [Water Pixel Shader](https://github.com/BOLTB0X/DirectX11-Draw/blob/Water-Basic/SisyphusEngine/src/HLSL/WaterPS.hlsl)
+
+    - [셰이더 버퍼 정의(C++)](https://github.com/BOLTB0X/DirectX11-Draw/blob/Water-Basic/SisyphusEngine/src/RederingEngine/Shader/ShaderBuffers.h)
+
+
+</details>
+
+
+<details>
+<summary> Ref </summary>
+
+- [rastertek (DirectX 11 on Windows 10 Tutorials) - Tutorial 31: Water](https://www.rastertek.com/dx11win10tut31.html)
+
+- [네이버 블로그( 프로그래머의 인생, 강동훈) - DirectX 11 : Lake from Habib's Water Shader](https://blog.naver.com/fah204)
+
+- [Gaem Development: GLSL Shader - Change Hue/Saturation/Brightness](http://gamedev.stackexchange.com/questions/59797/glsl-shader-change-hue-saturation-brightness)
+
+- [Github (jamesscully) - OpenGL Beach Scene](https://github.com/jamesscully/OpenGL-Beach-Scene)
+
+</details>
+
+
+---
+
 ## [Lab : 연습 및 흔적들 정리](https://github.com/BOLTB0X/DirectX11-Draw/tree/main/Lab)
 
 <details>
