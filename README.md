@@ -829,7 +829,7 @@
 
 두 개의 노말맵을 서로 다른 속도로 **이동(UV Animation)** 시키고, 이를 합성하여 얻은 벡터값으로 **굴절(Refraction)** 과 **반사(Reflection)** 를 왜곡시키는 전형적인 실시간 **Water** 렌더링 기법
 
-- feature: **Refraction** , **Reflection** , **LightColumn**
+- feature: **Dual Normal Animation** , **Refraction & Reflection Distortion** , **LightColumn** , **Specular & Sparkle** , **Alpha Blending**
 
 - [자세한 README는 여기 클릭](https://github.com/BOLTB0X/DirectX11-Draw/tree/Water-Basic/SisyphusEngine)
 
