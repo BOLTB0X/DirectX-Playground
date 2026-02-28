@@ -142,6 +142,16 @@ void UI::CreateWidget(PropertyHelper::Property<LensFlareBuffer> prop)
 } // CreateWidget (LensFlare)
 
 
+void UI::CreateWidget(PropertyHelper::Property<VolumetricCloudsBuffer> prop)
+{
+    AddWidget(std::make_unique<ShaderBufferWidget<VolumetricCloudsBuffer>>(
+        "PBR Volumetric Cloud Settings",
+        prop,
+        ShaderBufferImGuiDrawer::DrawVolumetricClouds
+    ));
+} // CreateWidget (PBR Volumetric Cloud)
+
+
 void UI::ToggleWidget()
 {
 

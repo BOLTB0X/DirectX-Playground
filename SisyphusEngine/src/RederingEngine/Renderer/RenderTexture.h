@@ -18,14 +18,17 @@ public:
     void SetLowResolutionRenderTarget(ID3D11DeviceContext*);
     void SetReflectionRenderTarget(ID3D11DeviceContext*);
     void SetRefractionRenderTarget(ID3D11DeviceContext*);
+    void SetCloudRenderTarget(ID3D11DeviceContext*);
 
     void SetLowResolutionSRV(ID3D11DeviceContext*, UINT);
     void SetReflectionSRV(ID3D11DeviceContext*, UINT);
     void SetRefractionSRV(ID3D11DeviceContext*, UINT);
+    void SetCloudSRV(ID3D11DeviceContext*, UINT);
 
     RenderTarget* GetReflectionRT() const;
     RenderTarget* GetRefractionRT() const;
     RenderTarget* GetLowResRT() const;
+    RenderTarget* GetCloudRT() const;
 
     void ClearShaderResources(ID3D11DeviceContext*, UINT);
 
@@ -33,4 +36,5 @@ private:
     std::unique_ptr<RenderTarget> m_ReflectionRT;
     std::unique_ptr<RenderTarget> m_RefractionRT;
     std::unique_ptr<RenderTarget> m_LowResRT;
+    std::unique_ptr<RenderTarget> m_CloudRT;
 }; // RenderTexture

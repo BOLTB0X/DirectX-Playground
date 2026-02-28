@@ -115,9 +115,9 @@ namespace ShaderBufferImGuiDrawer {
         // 구름의 형태 및 영역
         if (ImGui::CollapsingHeader("Shape & Transform", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            if (ImGui::DragFloat("Radius", &data.radius, 0.1f, 0.0f, 50.0f)) changed = true;
-            if (ImGui::DragFloat("Height", &data.height, 0.1f, -10.0f, 50.0f)) changed = true;
-            if (ImGui::DragFloat("Thickness", &data.thickness, 0.1f, 0.1f, 20.0f)) changed = true;
+            if (ImGui::DragFloat("Radius", &data.earthRadius, 0.1f, 0.0f, 50.0f)) changed = true;
+            if (ImGui::DragFloat("Height", &data.cloudStartHeight, 0.1f, -10.0f, 50.0f)) changed = true;
+            if (ImGui::DragFloat("Thickness", &data.cloudThickness, 0.1f, 0.1f, 20.0f)) changed = true;
 
             ImGui::Separator();
             if (ImGui::SliderFloat("Density Scale", &data.densityScale, 0.0f, 5.0f)) changed = true;
@@ -297,4 +297,59 @@ namespace ShaderBufferImGuiDrawer {
         return changed;
     } // DrawLensFlare
 
+
+    inline bool DrawVolumetricClouds(VolumetricCloudsBuffer& data)
+    {
+        bool changed = false;
+
+        // 1. 행성 및 대기 설정 (Planet & Atmosphere)
+        if (ImGui::CollapsingHeader("Planet & Atmosphere", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            if (ImGui::DragFloat3("Planet Center", (float*)&data.planetCenter, 100.0f)) changed = true;
+            if (ImGui::DragFloat("Earth Radius", &data.earthRadius, 1000.0f, 0.0f, 9000000.0f, "%.0f m")) changed = true;
+            if (ImGui::DragFloat("Fog Density", &data.fogDensity, 0.000001f, 0.0f, 0.001f, "%.6f")) changed = true;
+        }
+
+        // 2. 구름 영역 설정 (Cloud Layer Space)
+        // 두 번째 사진처럼 웅장한 느낌을 주려면 Min/Max Height 차이를 2000m 이상 벌려보세요.
+        if (ImGui::CollapsingHeader("Cloud Layer Geometry", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            if (ImGui::DragFloat("Cloud Min Height", &data.cloudMinHeight, 10.0f, 0.0f, 10000.0f, "%.0f m")) changed = true;
+            if (ImGui::DragFloat("Cloud Max Height", &data.cloudMaxHeight, 10.0f, 0.0f, 15000.0f, "%.0f m")) changed = true;
+            if (ImGui::DragFloat("Fade Distance", &data.cloudFadeDist, 100.0f, 0.0f, 100000.0f, "%.0f m")) changed = true;
+            if (ImGui::SliderFloat("Cloud Speed", &data.cloudSpeed, 0.0f, 1.0f, "%.3f")) changed = true;
+        }
+
+        // 3. 비주얼 및 밀도 (Visuals & Density)
+        if (ImGui::CollapsingHeader("Visuals & Density", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            if (ImGui::SliderFloat("Cloud Density", &data.cloudDensity, 0.0f, 1.0f, "%.3f")) changed = true;
+            if (ImGui::SliderFloat("Cloud Coverage", &data.cloudCoverage, 0.0f, 1.0f, "%.2f")) changed = true;
+            if (ImGui::SliderFloat("Cloud Absorption", &data.cloudAbsorption, 0.0f, 1.0f, "%.2f")) changed = true;
+            // Noise Scale은 매우 미세하게 움직여야 하므로 속도를 0.00001f로 설정했습니다.
+            if (ImGui::DragFloat("Noise Scale", &data.noiseScale, 0.00001f, 0.00001f, 0.01f, "%.5f")) changed = true;
+        }
+
+        // 4. 레이마칭 및 그림자 (Raymarching & Shadows)
+        if (ImGui::CollapsingHeader("Rendering Quality", ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            if (ImGui::SliderInt("Cloud Steps", &data.cloudSteps, 16, 256)) changed = true;
+            if (ImGui::SliderInt("Light Steps", &data.lightSteps, 1, 16)) changed = true;
+            if (ImGui::SliderFloat("Shadow Intensity", &data.shadowIntensity, 0.0f, 1.0f, "%.2f")) changed = true;
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+
+        // 초기화 버튼 (유저 정보대로 Init 기반 리셋)
+        ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.0f, 0.6f, 0.6f));
+        if (ImGui::Button("Reset to Default Settings", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
+        {
+            data = VolumetricCloudsBuffer(); // 구조체 생성자(Init) 호출
+            changed = true;
+        }
+        ImGui::PopStyleColor(1);
+
+        return changed;
+    }
 } // ShaderBufferImGuiDrawer

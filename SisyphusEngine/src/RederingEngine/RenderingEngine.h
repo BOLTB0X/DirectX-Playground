@@ -10,6 +10,7 @@
 // Rendering
 #include "Shader/ShaderBuffersManager.h"
 
+
 class Renderer;
 class RenderTexture;
 class TexturesManager;
@@ -17,6 +18,7 @@ class ShaderManager;
 class DefaultModel;
 class Light;
 class ShaderBuffersManager;
+
 
 class RenderingEngine {
 public:
@@ -58,14 +60,15 @@ public:
 	void Draw(float,
 		PropertyHelper::Property<DirectX::XMMATRIX>,
 		PropertyHelper::Property<DirectX::XMMATRIX>,
-		PropertyHelper::Property<DirectX::XMFLOAT3>);
+		PropertyHelper::Property<DirectX::XMFLOAT3>,
+		PropertyHelper::Property<float>);
 
 private:
-	void DrawSky(ID3D11DeviceContext*, float, DirectX::XMFLOAT3, DirectX::XMMATRIX, DirectX::XMMATRIX);
-	void DrawOcean(ID3D11DeviceContext*, float, DirectX::XMFLOAT3, DirectX::XMMATRIX, DirectX::XMMATRIX);
-	void DrawCloud(ID3D11DeviceContext*, float, DirectX::XMFLOAT3, DirectX::XMMATRIX, DirectX::XMMATRIX);
+	void DrawSky(ID3D11DeviceContext*, float, DirectX::XMFLOAT3, DirectX::XMMATRIX, DirectX::XMMATRIX, float);
+	void DrawOcean(ID3D11DeviceContext*, float, DirectX::XMFLOAT3, DirectX::XMMATRIX, DirectX::XMMATRIX, float);
+	void DrawCloud(ID3D11DeviceContext*, float, DirectX::XMFLOAT3, DirectX::XMMATRIX, DirectX::XMMATRIX, float);
 
-	void ApplyReflection(float, DirectX::XMFLOAT3, DirectX::XMMATRIX, DirectX::XMMATRIX);
+	void ApplyReflection(float, DirectX::XMFLOAT3, DirectX::XMMATRIX, DirectX::XMMATRIX, float);
 	void ApplyRefraction(float, DirectX::XMFLOAT3, DirectX::XMMATRIX, DirectX::XMMATRIX);
 	void ApplyBicubicUpscale(ID3D11DeviceContext*);
 	void ApplyLensFlare(ID3D11DeviceContext*, const DirectX::XMMATRIX&, const DirectX::XMMATRIX&, const DirectX::XMFLOAT3&);
@@ -77,7 +80,7 @@ private:
 	std::unique_ptr<TexturesManager> m_TexturesManager;
 	std::unique_ptr<ShaderManager> m_ShaderManager;
 	std::unique_ptr<DefaultModel> m_Cloud;
-	std::unique_ptr<DefaultModel> m_Quad;
+	std::unique_ptr<DefaultModel> m_Screen;
 	std::unique_ptr<DefaultModel> m_Sky;
 	std::unique_ptr<DefaultModel> m_Ocean;
 	std::unique_ptr<Light> m_Sun;

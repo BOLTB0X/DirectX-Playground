@@ -13,6 +13,7 @@ RenderTexture::RenderTexture()
     m_ReflectionRT = std::make_unique<RenderTarget>();
     m_RefractionRT = std::make_unique<RenderTarget>();
     m_LowResRT = std::make_unique<RenderTarget>();
+    m_CloudRT = std::make_unique<RenderTarget>();
 } // RenderTexture
 
 
@@ -36,6 +37,10 @@ bool RenderTexture::Init(ID3D11Device* device, int width, int height)
     if (m_LowResRT->Init(device, width, height) == false)
         return false;
 
+    // 볼류매트릭 구름
+    if (m_CloudRT->Init(device, width, height) == false)
+        return false;
+
     return true;
 } // Init
 
@@ -45,6 +50,7 @@ void RenderTexture::Shutdown()
     if (m_ReflectionRT) m_ReflectionRT.reset();
     if (m_RefractionRT) m_RefractionRT.reset();
     if (m_LowResRT) m_LowResRT.reset();
+    if (m_CloudRT) m_CloudRT.reset();
 } // Shutdown
 
 
@@ -70,6 +76,13 @@ void RenderTexture::SetRefractionRenderTarget(ID3D11DeviceContext* context)
 } // SetRefractionRenderTarget
 
 
+void RenderTexture::SetCloudRenderTarget(ID3D11DeviceContext* context)
+{
+    ClearShaderResources(context, 0);
+    m_CloudRT->Clear(context, 0, 0, 0, 1);
+} // SetCloudRenderTarget
+
+
 void RenderTexture::SetLowResolutionSRV(ID3D11DeviceContext* context, UINT slot)
 {
     ID3D11ShaderResourceView* srv = m_LowResRT->GetSRV();
@@ -77,17 +90,27 @@ void RenderTexture::SetLowResolutionSRV(ID3D11DeviceContext* context, UINT slot)
 } // SetLowResolutionSRV
 
 
-void RenderTexture::SetReflectionSRV(ID3D11DeviceContext* context, UINT slot) {
+void RenderTexture::SetReflectionSRV(ID3D11DeviceContext* context, UINT slot)
+{
     ID3D11ShaderResourceView* srv = m_ReflectionRT->GetSRV();
     context->PSSetShaderResources(slot, 1, &srv);
 } // SetReflectionSRV
 
 
-void RenderTexture::SetRefractionSRV(ID3D11DeviceContext* context, UINT slot) {
+void RenderTexture::SetRefractionSRV(ID3D11DeviceContext* context, UINT slot)
+{
     ID3D11ShaderResourceView* srv = m_RefractionRT->GetSRV();
 
     context->PSSetShaderResources(slot, 1, &srv);
 } // SetRefractionSRV
+
+
+void RenderTexture::SetCloudSRV(ID3D11DeviceContext* context, UINT slot)
+{
+    ID3D11ShaderResourceView* srv = m_CloudRT->GetSRV();
+
+    context->PSSetShaderResources(slot, 1, &srv);
+} // SetCloudSRV
 
 
 RenderTarget* RenderTexture::GetReflectionRT() const
@@ -106,6 +129,12 @@ RenderTarget* RenderTexture::GetLowResRT() const
 {
     return m_LowResRT.get();
 }// GetLowResRT
+
+
+RenderTarget* RenderTexture::GetCloudRT() const
+{
+    return m_CloudRT.get();
+} // GetCloudRT
 
 
 void RenderTexture::ClearShaderResources(ID3D11DeviceContext* context, UINT slot)

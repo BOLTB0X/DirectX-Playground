@@ -4,7 +4,11 @@
 #include <wrl/client.h>
 #include <string>
 
-enum class ShaderType { None, Sun, Cloud, Sky, Bicubic, LensFlare, Water, Refraction };
+enum class ShaderType {
+    None, Sun, Cloud, Sky,
+    Bicubic, LensFlare, Water,
+    Refraction, VolumetricClouds
+};
 
 class Shader {
 public:
@@ -19,7 +23,7 @@ public:
 
     // common
     bool UpdateMatrixBuffer(ID3D11DeviceContext*, DirectX::XMMATRIX, DirectX::XMMATRIX, DirectX::XMMATRIX);
-    bool UpdateGlobalBuffer(ID3D11DeviceContext*, float, float, DirectX::XMFLOAT3);
+    bool UpdateGlobalBuffer(ID3D11DeviceContext*, float, float, DirectX::XMFLOAT3, DirectX::XMMATRIX, float, float);
     ShaderType GetShaderType() const { return m_type; }
 
 protected:

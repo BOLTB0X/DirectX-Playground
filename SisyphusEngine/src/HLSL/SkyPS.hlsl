@@ -2,7 +2,6 @@
 #include "Common.hlsli"
 #include "Maths.hlsli"
 
-
 struct PixelSkyInput
 {
     float4 position : SV_POSITION;

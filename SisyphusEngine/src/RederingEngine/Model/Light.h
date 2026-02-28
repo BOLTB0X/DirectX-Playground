@@ -32,6 +32,8 @@ public:
     float GetIntensity() const;
     DirectX::XMMATRIX GetModelMatrix();
     DirectX::XMFLOAT2 GetModelUV(const DirectX::XMMATRIX&, const DirectX::XMMATRIX&);
+    DirectX::XMVECTOR GetPositionVec();
+    DirectX::XMVECTOR GetDirectionVec();
 
 private:
     std::unique_ptr<DefaultModelBuffer> m_ModelBuffer;

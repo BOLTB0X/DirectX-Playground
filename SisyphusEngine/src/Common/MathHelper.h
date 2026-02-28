@@ -108,7 +108,7 @@ namespace MathHelper { // Graph
 } // Terrain
 
 
-namespace MathHelper { // 벡터 연산
+namespace MathHelper { // 행렬, 벡터 연산
 
     inline DirectX::XMFLOAT3 Add(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b)
     {
@@ -195,8 +195,9 @@ namespace MathHelper { // 벡터 연산
 
         return reflectionMatrix;
     } // GetReflectionMatrixFromPlane
+
     
-} // 벡터 연산
+} // 행렬 & 벡터 연산
 
 
 namespace MathHelper {

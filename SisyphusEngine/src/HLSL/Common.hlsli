@@ -7,10 +7,19 @@ cbuffer GlobalBuffer : register(b1)
     
     // Row 2
     float3 iCameraPos;
-    float GlobalPadding1;
+    float iFov;
     
     // Row 3
-    float4 GlobalPadding2;
+    float3 iCamForward;
+    float iAspect;
+    
+    // Row 4
+    float3 iCamRight;
+    float padding1;
+    
+    // Row 5
+    float3 iCamUp;
+    float padding2;
 }; // GlobalBuffer
 
 

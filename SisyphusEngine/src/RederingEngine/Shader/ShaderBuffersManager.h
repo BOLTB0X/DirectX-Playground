@@ -28,6 +28,8 @@ public:
             return reinterpret_cast<StructContainer<T>*>(m_sky.get())->Get();
         if (key == ShaderBufferKeys::LensFlare)
             return reinterpret_cast<StructContainer<T>*>(m_lensFlare.get())->Get();
+        if (key == ShaderBufferKeys::VolumetricClouds)
+            return reinterpret_cast<StructContainer<T>*>(m_voluCloud.get())->Get();
 
         static T fallback;
         return fallback;
@@ -57,12 +59,18 @@ public:
             return *reinterpret_cast<PropertyHelper::Property<T>*>(&GetLensFlareProperty());
         }
 
+        if (key == ShaderBufferKeys::VolumetricClouds)
+        {
+            return *reinterpret_cast<PropertyHelper::Property<T>*>(&GetVolumetricCloudsProperty());
+        }
+
         return PropertyHelper::Property<T>(nullptr, nullptr);
     } // DeliveryBuffer
 
 
 private:
     PropertyHelper::Property<WaterBuffer> GetWaterProperty();
+    PropertyHelper::Property<VolumetricCloudsBuffer> GetVolumetricCloudsProperty();
     PropertyHelper::Property<CloudBuffer> GetCloudProperty();
     PropertyHelper::Property<SkyBuffer> GetSkyProperty();
     PropertyHelper::Property<LensFlareBuffer> GetLensFlareProperty();
@@ -72,4 +80,5 @@ private:
     std::unique_ptr<StructContainer<CloudBuffer>> m_cloud;
     std::unique_ptr<StructContainer<SkyBuffer>> m_sky;
     std::unique_ptr<StructContainer<LensFlareBuffer>> m_lensFlare;
+    std::unique_ptr< StructContainer<VolumetricCloudsBuffer>> m_voluCloud;
 }; // ShaderBuffersManager

@@ -45,6 +45,7 @@ public:
     void CreateWidget(PropertyHelper::Property<CloudBuffer>);
     void CreateWidget(PropertyHelper::Property<SkyBuffer>);
     void CreateWidget(PropertyHelper::Property<LensFlareBuffer>);
+    void CreateWidget(PropertyHelper::Property<VolumetricCloudsBuffer>);
     bool IsWorldClicked(bool mousePressed) const;
 
 public:

@@ -54,7 +54,8 @@ bool SkyShader::InitBuffers(ID3D11Device* device)
     matrixDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     matrixDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-    if (FAILED(device->CreateBuffer(&matrixDesc, nullptr, &m_matrixBuffer))) return false;
+    if (FAILED(device->CreateBuffer(&matrixDesc, nullptr, &m_matrixBuffer)))
+        return false;
 
     D3D11_BUFFER_DESC globalDesc = {};
     globalDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -62,7 +63,8 @@ bool SkyShader::InitBuffers(ID3D11Device* device)
     globalDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     globalDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-    if (FAILED(device->CreateBuffer(&globalDesc, nullptr, &m_globalBuffer))) return false;
+    if (FAILED(device->CreateBuffer(&globalDesc, nullptr, &m_globalBuffer)))
+        return false;
 
     D3D11_BUFFER_DESC lightDesc = {};
     lightDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -71,7 +73,8 @@ bool SkyShader::InitBuffers(ID3D11Device* device)
     lightDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     lightDesc.MiscFlags = 0;
     lightDesc.StructureByteStride = 0;
-    if (FAILED(device->CreateBuffer(&lightDesc, nullptr, &m_lightBuffer))) return false;
+    if (FAILED(device->CreateBuffer(&lightDesc, nullptr, &m_lightBuffer)))
+        return false;
 
     D3D11_BUFFER_DESC skyDesc = {};
     skyDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -79,7 +82,8 @@ bool SkyShader::InitBuffers(ID3D11Device* device)
     skyDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     skyDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-    if (FAILED(device->CreateBuffer(&skyDesc, nullptr, &m_skyBuffer))) return false;
+    if (FAILED(device->CreateBuffer(&skyDesc, nullptr, &m_skyBuffer)))
+        return false;
 
     return true;
 } // InitBuffers

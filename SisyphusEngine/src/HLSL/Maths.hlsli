@@ -1,5 +1,8 @@
 #define PI 3.14159265359
 
+static const float pi = 3.14159265359;
+static const float hPi = pi * 0.5;
+static const float rLOG2 = 1.0 / log(2.0);
 
 // 일반적인 수학
 ///////////////////////////////////////////////////////////////

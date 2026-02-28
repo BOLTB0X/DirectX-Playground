@@ -14,6 +14,7 @@ namespace ShaderBufferKeys {
     const std::string Water = "Water";
     const std::string Light = "Light";
     const std::string Refraction = "Refraction";
+    const std::string VolumetricClouds = "VolumetricClouds";
 } // ShaderBufferKeys
 
 
@@ -25,9 +26,19 @@ struct GlobalBuffer {
 
     // Row 2
     DirectX::XMFLOAT3 iCameraPos;
+    float fov;
+
+    // Row 3
+    DirectX::XMFLOAT3 camForward;
+    float aspect;
+
+    // Row 4
+    DirectX::XMFLOAT3 camRight;
     float padding1;
 
-    DirectX::XMFLOAT4 padding2;
+    // Row 5
+    DirectX::XMFLOAT3 camUp;
+    float padding2;
 }; // GlobalBuffer
 
 
@@ -35,6 +46,7 @@ struct MatrixBuffer {
     DirectX::XMMATRIX model;
     DirectX::XMMATRIX view;
     DirectX::XMMATRIX projection;
+    DirectX::XMMATRIX invViewProj;
 }; // MatrixBuffer
 
 
@@ -75,7 +87,7 @@ struct LightBuffer {
 struct CloudBuffer {
     // Row 1
     DirectX::XMFLOAT3 baseColor;
-    float iCloudType;
+    float padding1;
 
     // Row 2
     DirectX::XMFLOAT3 ambient;
@@ -86,9 +98,9 @@ struct CloudBuffer {
     float marchSize;
 
     // Row 4
-    float radius;
-    float height;
-    float thickness;
+    float earthRadius; // 가상의 지구 반지름
+    float cloudStartHeight; // 구름이 시작되는 고도
+    float cloudThickness; // 구름 층의 두께
     float noiseRes;
 
     // Row 5
@@ -115,20 +127,20 @@ struct CloudBuffer {
 
     // Row 9
     int fbmOctaves;
-    DirectX::XMFLOAT3 padding;
+    DirectX::XMFLOAT3 padding2;
 
     CloudBuffer()
     {
         baseColor = { 1.0f, 1.0f, 1.0f };
-        iCloudType = 1.0f;
+        padding1 = 1.0f;
         ambient = { 0.25f, 0.25f, 0.25f };
         shadowColor = { 0.02f, 0.08f, 0.25f };
         maxSteps = 100.0f;
         marchSize = 0.08f;
 
-        radius = 2.0f;
-        height = 1.0f;
-        thickness = 2.0f;
+        earthRadius = 2.0f;
+        cloudStartHeight = 1.0f;
+        cloudThickness = 2.0f;
         noiseRes = 256.0f;
 
         densityScale = 0.4f;
@@ -150,44 +162,9 @@ struct CloudBuffer {
         fbmPersistance = 0.5f;
         fbmOctaves = 6;
 
-        padding = { 0.0f, 0.0f, 0.0f };
+        padding2 = { 0.0f, 0.0f, 0.0f };
     }
 
-    CloudBuffer(float cloudType)
-        : iCloudType(cloudType)
-    {
-        baseColor = { 1.0f, 1.0f, 1.0f };
-        ambient = { 0.25f, 0.25f, 0.25f };
-        shadowColor = { 0.02f, 0.08f, 0.25f };
-        maxSteps = 100.0f;
-        marchSize = 0.08f;
-
-        radius = 2.0f;
-        height = 1.0f;
-        thickness = 2.0f;
-        noiseRes = 256.0f;
-
-        densityScale = 0.4f;
-        falloffScale = 0.1f;
-        mieIntensity = 3.0f; // 전방 산란 밝기
-        miePower = 15.0f; // 전방 산란 날카로움
-
-        diffusePower = 2.0f;
-        lightMultiply = 4.0f;
-        shadowDist = 0.4f;
-        maxDepth = 50.0f;
-
-        windDir = { 1.0f, -0.2f, -1.0f };
-        cloudSpeed = 0.5f;
-
-        fbmScale = 0.5f;
-        fbmFactor = 2.02f;
-        fbmIncrement = 0.21f;
-        fbmPersistance = 0.5f;
-        fbmOctaves = 6;
-
-        padding = { 0.0f, 0.0f, 0.0f };
-    }
 }; // CloudBuffer
 
 
@@ -416,3 +393,57 @@ struct RefractionBuffer {
         clipPlane = { 0.0f, 1.0f, 0.0f, 0.0f };
     }
 }; // RefractionBuffer
+
+
+struct VolumetricCloudsBuffer {
+    // Row 1 행성 
+    DirectX::XMFLOAT3 planetCenter;
+    float earthRadius;
+
+    //Row 2 구름층 공간
+    float cloudMinHeight;
+    float cloudMaxHeight;
+    float cloudFadeDist;
+    float cloudSpeed;
+
+    // Row 3 비주얼 및 밀도
+    float cloudDensity; // 0.0 ~ 1.0
+    float cloudCoverage; // 구름이 하늘을 덮는 비율 (0.0 ~ 1.0)
+    float cloudAbsorption;// 구름 내부에서 빛이 흡수되는 정도
+    float padding1;
+
+    // Row 4 레이마칭
+    int cloudSteps;
+    int lightSteps;
+    float shadowIntensity; // 구름 그림자 농도
+    float noiseScale; // 노이즈 텍스처 크기 조절
+
+    // Row 5 산란 및 후처리
+    float fogDensity;
+    DirectX::XMFLOAT3 padding2;
+
+    VolumetricCloudsBuffer()
+    {
+        //earthRadius = 10.0f;
+        earthRadius = 6371000.0f;
+        planetCenter = { 0.0f, -earthRadius, 0.0f };
+
+        cloudMinHeight = 200.0f;
+        cloudMaxHeight = 600.0f;
+        cloudFadeDist = -10.5f;
+        cloudSpeed = 0.05f;
+
+        cloudDensity = 0.02f;
+        cloudCoverage = 0.45f;
+        cloudAbsorption = 0.35f;
+        padding1 = 0.0f;
+
+        cloudSteps = 64;
+        lightSteps = 6;
+        shadowIntensity = 0.7f;
+        noiseScale = 0.0002f;
+
+        fogDensity = 0.00003f;
+        padding2 = { 0.0f, 0.0f, 0.0f };
+    }
+}; // VolumetricCloudsBuffer

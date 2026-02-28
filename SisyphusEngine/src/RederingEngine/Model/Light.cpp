@@ -123,3 +123,15 @@ DirectX::XMFLOAT2 Light::GetModelUV(const DirectX::XMMATRIX& view, const DirectX
         XMVectorGetY(screenPos) / (float)SCREEN_HEIGHT
     );
 } // GetNDCModelUV
+
+
+DirectX::XMVECTOR Light::GetPositionVec()
+{
+    return DirectX::XMLoadFloat3(&GetPosition());
+} // GetPositionVec
+
+
+DirectX::XMVECTOR Light::GetDirectionVec()
+{
+    return DirectX::XMVector3Normalize(GetPositionVec());
+} // GetDirectionVec

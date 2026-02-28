@@ -100,7 +100,8 @@ void MainEngine::Render()
     m_RenderingEngine->Draw(m_Timer->GetTotalTime(),
         Property<XMMATRIX>([this]() { return m_Camera->GetViewMatrix(); }, nullptr),
         Property<XMMATRIX>([this]() { return m_Camera->GetProjectionMatrix(); }, nullptr),
-        Property<XMFLOAT3>([this]() { return m_Camera->GetPosition(); }, nullptr));
+        Property<XMFLOAT3>([this]() { return m_Camera->GetPosition(); }, nullptr),
+        Property<float>([this]() { return m_Camera->GetFov(); }, nullptr));
 
     m_UI->Render();
 
@@ -180,9 +181,10 @@ void MainEngine::CreateWidget()
         camPosProp, camRotProp, camFovProp,
         wireProp, backProp, depthProp);
 
-    m_UI->CreateWidget(m_RenderingEngine->DeliveryBuffer<WaterBuffer>(ShaderBufferKeys::Water));
-    m_UI->CreateWidget(m_RenderingEngine->DeliveryBuffer<CloudBuffer>(ShaderBufferKeys::Cloud));
-    m_UI->CreateWidget(m_RenderingEngine->DeliveryBuffer<SkyBuffer>(ShaderBufferKeys::Sky));
-    m_UI->CreateWidget(m_RenderingEngine->DeliveryBuffer<LensFlareBuffer>(ShaderBufferKeys::LensFlare));
+    //m_UI->CreateWidget(m_RenderingEngine->DeliveryBuffer<WaterBuffer>(ShaderBufferKeys::Water));
+    m_UI->CreateWidget(m_RenderingEngine->DeliveryBuffer<VolumetricCloudsBuffer>(ShaderBufferKeys::VolumetricClouds));
+    //m_UI->CreateWidget(m_RenderingEngine->DeliveryBuffer<CloudBuffer>(ShaderBufferKeys::Cloud));
+    //m_UI->CreateWidget(m_RenderingEngine->DeliveryBuffer<SkyBuffer>(ShaderBufferKeys::Sky));
+    //m_UI->CreateWidget(m_RenderingEngine->DeliveryBuffer<LensFlareBuffer>(ShaderBufferKeys::LensFlare));
 
 } // CreateWidget

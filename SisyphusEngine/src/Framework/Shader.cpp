@@ -83,13 +83,16 @@ bool Shader::UpdateMatrixBuffer(ID3D11DeviceContext* context,
     data->view = XMMatrixTranspose(view);
     data->projection = XMMatrixTranspose(proj);
 
+    XMMATRIX invVP = XMMatrixInverse(nullptr, view * proj);
+    data->invViewProj = XMMatrixTranspose(invVP);
+
     context->Unmap(m_matrixBuffer.Get(), 0);
     return true;
 } // UpdateMatrixBuffer
 
 
 bool Shader::UpdateGlobalBuffer(ID3D11DeviceContext* context,
-    float time, float frame, XMFLOAT3 cameraPos)
+    float time, float frame, XMFLOAT3 cameraPos, XMMATRIX view, float fov, float aspect)
 {
     D3D11_MAPPED_SUBRESOURCE mapped;
     if (FAILED(context->Map(m_globalBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) return false;
@@ -99,6 +102,14 @@ bool Shader::UpdateGlobalBuffer(ID3D11DeviceContext* context,
     data->iFrame = frame;
     data->iCameraPos = cameraPos;
     data->iResolution = XMFLOAT2(SCREEN_WIDTH, SCREEN_HEIGHT);
+    data->fov = fov;
+    data->aspect = aspect;
+
+    XMVECTOR det;
+    XMMATRIX invView = XMMatrixInverse(&det, view);
+    XMStoreFloat3(&data->camRight, invView.r[0]);
+    XMStoreFloat3(&data->camUp, invView.r[1]);
+    XMStoreFloat3(&data->camForward, invView.r[2]);
 
     context->Unmap(m_globalBuffer.Get(), 0);
     return true;

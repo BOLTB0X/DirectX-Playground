@@ -10,7 +10,8 @@ using namespace PropertyHelper;
 ShaderBuffersManager::ShaderBuffersManager()
 {
     m_water = std::make_unique<StructContainer<WaterBuffer>>(WaterBuffer());
-    m_cloud = std::make_unique<StructContainer<CloudBuffer>>(CloudBuffer((float)ConstantHelper::CloudType::Plane));
+    m_voluCloud = std::make_unique<StructContainer<VolumetricCloudsBuffer>>(VolumetricCloudsBuffer());
+    m_cloud = std::make_unique<StructContainer<CloudBuffer>>(CloudBuffer());
     m_sky = std::make_unique<StructContainer<SkyBuffer>>(SkyBuffer());
     m_lensFlare = std::make_unique<StructContainer<LensFlareBuffer>>(LensFlareBuffer());
 } // ShaderBuffersManager
@@ -28,6 +29,15 @@ Property<WaterBuffer> ShaderBuffersManager::GetWaterProperty()
         [this](const WaterBuffer& v) { m_water->Set(v); }
     );
 } // GetWaterProperty
+
+
+Property<VolumetricCloudsBuffer> ShaderBuffersManager::GetVolumetricCloudsProperty()
+{
+    return Property<VolumetricCloudsBuffer>(
+        [this]() { return m_voluCloud->Get(); },
+        [this](const VolumetricCloudsBuffer& v) { m_voluCloud->Set(v); }
+    );
+} // GetVolumetricCloudsProperty
 
 
 Property<CloudBuffer> ShaderBuffersManager::GetCloudProperty()

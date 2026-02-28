@@ -30,13 +30,14 @@ namespace ConstantHelper { // HLSL
     const std::wstring QUAD_VS = L"HLSL/QuadVS.hlsl";
     const std::wstring SKY_VS = L"HLSL/SkyVS.hlsl";
     const std::wstring WATER_VS = L"HLSL/WaterVS.hlsl";
+    const std::wstring VOLCLOUD_VS = L"HLSL/VolumetricCloudsVS.hlsl";
 
     const std::wstring CLOUD_PS = L"HLSL/CloudPS.hlsl";
     const std::wstring BICUBIC_PS = L"HLSL/BicubicPS.hlsl";
     const std::wstring SKY_PS = L"HLSL/SkyPS.hlsl";
 	const std::wstring LENSFLARE_PS = L"HLSL/LensFlarePS.hlsl";
     const std::wstring WATER_PS = L"HLSL/WaterPS.hlsl";
-
+    const std::wstring VOLCLOUD_PS = L"HLSL/VolumetricCloudsPS.hlsl";
 };
 
 
@@ -72,7 +73,7 @@ namespace ConstantHelper { // 렌더링 관련
 
         switch (cloudType) {
         case CloudType::Plane:
-            setup.position = { 0.0f, 3.169f, -6.0f };
+            setup.position = { 0.0f, 0.0f, -6.0f };
             setup.rotation = { -0.25f, 322.25f, 3.076f };
             break;
         default:

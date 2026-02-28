@@ -6,6 +6,7 @@
 #include "LensFlareShader.h"
 #include "WaterShader.h"
 #include "RefractionShader.h"
+#include "VolumetricCloudsShader.h"
 // Framework
 #include "Shader.h"
 // Common
@@ -63,6 +64,11 @@ bool ShaderManager::Init(ID3D11Device* device, HWND hwnd)
 
 	auto refractionShader = std::make_unique<RefractionShader>();
 
+    auto voluCloudShader = std::make_unique<VolumetricCloudsShader>();
+    if (voluCloudShader->Init(device, hwnd,
+        ConstantHelper::VOLCLOUD_VS,
+        ConstantHelper::VOLCLOUD_PS) == false) return false;
+    m_shaders[ShaderKeys::VolumetricCloud] = std::move(voluCloudShader);
     return true;
 } // Init
 
@@ -84,14 +90,14 @@ void ShaderManager::UpdateMatrixBuffer(const std::string key, ID3D11DeviceContex
 
 
 void ShaderManager::UpdateGlobalBuffer(
-    const std::string key,
-    ID3D11DeviceContext* context,
-    float time, float frame, XMFLOAT3 cameraPos)
+    const std::string key, ID3D11DeviceContext* context,
+    float time, float frame, XMFLOAT3 cameraPos,
+    XMMATRIX view, float fov, float aspect)
 {
     auto it = m_shaders.find(key);
     if (it == m_shaders.end())
         return;
-    it->second->UpdateGlobalBuffer(context, time, frame, cameraPos);
+    it->second->UpdateGlobalBuffer(context, time, frame, cameraPos, view, fov, aspect);
 } // UpdateGlobalBuffer
 
 
@@ -125,6 +131,16 @@ void ShaderManager::UpdateSkyBuffer(ID3D11DeviceContext* context, const SkyBuffe
         static_cast<SkyShader*>(it->second.get())->UpdateSkyBuffer(context, data);
     }
 } // UpdateSkyBuffer
+
+
+void ShaderManager::UpdateVolumetricCloudsBuffer(ID3D11DeviceContext* context, const VolumetricCloudsBuffer& data)
+{
+    auto it = m_shaders.find(ShaderKeys::VolumetricCloud);
+    if (it != m_shaders.end())
+    {
+        static_cast<VolumetricCloudsShader*>(it->second.get())->UpdateVolumetricCloudsBuffer(context, data);
+    }
+} // UpdateVolumetricCloudsBuffer
 
 
 void ShaderManager::UpdateLensFlareBuffer(ID3D11DeviceContext* context, const LensFlareBuffer& data)
@@ -199,13 +215,11 @@ void ShaderManager::SetConstantBuffers(const std::string key,
     }
     else if (type == ShaderType::LensFlare)
     {
-        //ID3D11Buffer* buffer = GetShader<SkyShader>(ShaderKeys::Sky)->GetLightBuffer();
         if (buffer == nullptr) return;
         static_cast<LensFlareShader*>(shader)->SetConstantBuffers(context, buffer);
     }
     else if (type == ShaderType::Water)
     {
-        //ID3D11Buffer* buffer = GetShader<SkyShader>(ShaderKeys::Sky)->GetLightBuffer();
         if (buffer == nullptr) return;
         static_cast<WaterShader*>(shader)->SetConstantBuffers(context, buffer);
     }
@@ -213,5 +227,11 @@ void ShaderManager::SetConstantBuffers(const std::string key,
     {
         if (buffer == nullptr) return;
         static_cast<RefractionShader*>(it->second.get())->SetConstantBuffers(context, buffer);
+    }
+    else if (key == ShaderKeys::VolumetricCloud)
+    {
+        if (buffer == nullptr) return;
+        static_cast<VolumetricCloudsShader*>(it->second.get())->SetConstantBuffers(context, buffer);
+
     }
 } // SetConstantBuffers
