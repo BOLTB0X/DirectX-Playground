@@ -6,27 +6,10 @@
 ~~가성비 노후된 노트북으로~~ **Sisyphus Engine** 으로 그려그려
 
 
-## Sisyphus Engine: Tech Stack
+## ShaderToy 포팅연습
 
-- **OS** : Windows 11
 
-- **IDE** : [VisualStudio 2022 community](https://www.microsoft.com/en-us/download/details.aspx?id=17431)
-
-- **Lang** : C++, HLSL
-
-- **Graphics API** : [DirectX 11](https://www.microsoft.com/en-us/download/details.aspx?id=17431)
-
-- **Build & Package Manager** : [vcpkg](https://github.com/microsoft/vcpkg?tab=readme-ov-file)
-
-- **External Libraries**
-    - [stb_image](https://github.com/nothings/stb/tree/master) : `jpg`, `png` 파일 로딩
-    - [DirectXTK](https://github.com/microsoft/DirectXTK) : `dds` 파일 로딩
-    - [assimp](https://github.com/assimp/assimp) : `.obj`, `.fbx` 모델 로딩
-    - [Imgui](https://github.com/ocornut/imgui) : 디버깅 및 개발용 UI
-
----
-
-## [Sisyphus Engine : 구름과 태양](https://github.com/BOLTB0X/DirectX11-Draw/tree/Sun-and-Cloud/SisyphusEngine)
+## [proto_Sisyphus](https://github.com/BOLTB0X/DirectX11-Draw/tree/Sun-and-Cloud/SisyphusEngine)
 
 <p align="center">
   <table style="width:100%; text-align:center; border-spacing:20px;">

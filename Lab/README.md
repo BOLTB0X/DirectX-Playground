@@ -449,21 +449,21 @@ DirectX 11에서  `ID3D11Buffer`  **인터페이스로 캡슐화되며, CPU에�
 
 ## Issue in 시지프스
 
-- [포스트 프로세싱 SRV 에러](https://github.com/BOLTB0X/DirectX11-Draw/issues/4) -> [포스트 프로세싱이 잘못된걸 고치는 이야기](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/Studies/BicubicModifyingPlaneScene.md)
+- [포스트 프로세싱 SRV 에러](https://github.com/BOLTB0X/DirectX11-Draw/issues/4) -> [포스트 프로세싱이 잘못된걸 고치는 이야기](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/DX11_Studies/BicubicModifyingPlaneScene.md)
 
-- [렌즈플레어 적용시 화면 고스트 고정 현상](https://github.com/BOLTB0X/DirectX11-Draw/issues/5) -> [Ghost가 고정되었던 이유에서 존 챔피언 방식으로 고치는 이야기](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/Studies/FixedGhost.md)
+- [렌즈플레어 적용시 화면 고스트 고정 현상](https://github.com/BOLTB0X/DirectX11-Draw/issues/5) -> [Ghost가 고정되었던 이유에서 존 챔피언 방식으로 고치는 이야기](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/DX11_Studies/FixedGhost.md)
 
 ---
 
 ## Study
 
-- [Noise](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/Studies/Noise.md)
+- [Noise](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/DX11_Studies/Noise.md)
 
-- [FBM](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/Studies/FBM.md)
+- [FBM](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/DX11_Studies/FBM.md)
 
-- [RayMarch](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/Studies/Raymarch.md)
+- [RayMarch](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/DX11_Studies/Raymarch.md)
 
-- [Lighting](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/Studies/Light.md)
+- [Lighting](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/DX11_Studies/Light.md)
 
 
 ---
