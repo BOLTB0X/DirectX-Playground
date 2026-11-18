@@ -2,7 +2,7 @@
 
 ![헤헤](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/DemoGIF/%EC%97%B0%EC%84%B1%EC%A7%84.gif?raw=true)
 
-DriectX 11 개발 연습 및 학습물들 정리(아무 기능 구현이나 삽질 [과정에 생겼던 에러 및 궁금증](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/Studies/Error-history.md) 들을 기록)
+DriectX 개발 연습 및 학습물들 정리
 
 ## DirectX 11 알면 좋은 것
 
