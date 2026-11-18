@@ -4,7 +4,7 @@
 
 DriectX 11 개발 연습 및 학습물들 정리(아무 기능 구현이나 삽질 [과정에 생겼던 에러 및 궁금증](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/Studies/Error-history.md) 들을 기록)
 
-## 알면 좋은 것
+## DirectX 11 알면 좋은 것
 
 <details>
 <summary> DirectX 11 란? </summary>
@@ -447,11 +447,324 @@ DirectX 11에서  `ID3D11Buffer`  **인터페이스로 캡슐화되며, CPU에�
 
 </details>
 
-## Issue in 시지프스
+---
 
-- [포스트 프로세싱 SRV 에러](https://github.com/BOLTB0X/DirectX11-Draw/issues/4) -> [포스트 프로세싱이 잘못된걸 고치는 이야기](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/DX11_Studies/BicubicModifyingPlaneScene.md)
+## DirectX 12 알면 좋은 것
 
-- [렌즈플레어 적용시 화면 고스트 고정 현상](https://github.com/BOLTB0X/DirectX11-Draw/issues/5) -> [Ghost가 고정되었던 이유에서 존 챔피언 방식으로 고치는 이야기](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/DX11_Studies/FixedGhost.md)
+<details>
+<summary> DirectX 12 란? </summary>
+
+### [DirectX 12](https://learn.microsoft.com/en-us/windows/win32/direct3d12/direct3d-12-graphics) 란 무엇인가
+
+**DirectX 12(D3D12)** 는 게임과 그래픽 프로그램이 GPU를 사용하도록 해주는 그래픽 API입니다.
+
+DirectX 11보다 애플리케이션이 GPU의 작업 제출, 리소스 상태, 동기화 등을 더 직접 관리할 수 있습니다. 그만큼 CPU 작업을 줄이고 여러 CPU 코어를 활용하기 쉬워지지만, 애플리케이션이 올바르게 관리해야 하는 일도 늘어납니다. [Microsoft: Direct3D 11에서 12로 바뀐 점](https://learn.microsoft.com/en-us/windows/win32/direct3d12/important-changes-from-directx-11-to-directx-12)
+
+> DX11은 런타임이 많은 작업을 대신 관리해 주고,  
+> DX12는 애플리케이션이 GPU 작업과 리소스 사용을 더 명시적으로 관리한다.
+
+---
+
+### DirectX 12 기본 구조
+
+```text
+[CPU]
+Application
+ ├─ Device
+ ├─ Command Queue
+ ├─ Command Allocator
+ ├─ Command List
+ ├─ Fence
+ └─ Resource / Descriptor 관리
+
+[GPU]
+Command Queue에서 명령 실행
+ └─ 그래픽스 또는 컴퓨트 파이프라인
+```
+
+DX12에서는 CPU가 명령 목록을 기록하고, 커맨드 큐에 제출하면 GPU가 그 명령을 실행함
+
+```cpp
+commandList->Close();
+commandQueue->ExecuteCommandLists(1, commandLists);
+```
+
+명령 목록을 제출했다고 해서 GPU가 즉시 작업을 끝낸 것은 아닌데, GPU가 특정 작업까지 마쳤는지 확인하려면 보통 `Fence`를 사용
+
+### DX12에서 애플리케이션이 관리하는 것
+
+- GPU 작업을 기록하고 큐에 제출하는 시점
+- GPU가 사용하는 리소스의 상태와 전환
+- CPU와 GPU 사이의 동기화
+- GPU가 사용 중인 메모리를 언제 재사용할지
+- 셰이더가 사용할 리소스의 디스크립터와 바인딩
+  
+DX12의 낮은 오버헤드는 이런 관리를 애플리케이션이 맡는 구조에서 나옴
+
+관리를 잘못하면 리소스를 너무 일찍 덮어쓰거나, 필요한 상태 전환을 빠뜨리는 문제가 생길 수 있음
+<br/>
+
+</details>
+
+<details>
+<summary> DX 11과 DX 12의 차이 </summary>
+
+### 큰 차이
+
+| 항목 | DirectX 11 | DirectX 12 |
+|---|---|---|
+| API 성격 | 비교적 높은 수준의 상태 기반 API | 낮은 수준의 명시적 제어 API |
+| 명령 기록 | 주로 `DeviceContext`에서 상태 설정 후 그리기 | `Command List`에 명령을 기록한 뒤 `Command Queue`에 제출 |
+| CPU 멀티스레딩 | 즉시 컨텍스트 사용이 제한적이며 런타임 부담이 있음 | 여러 스레드에서 명령 목록을 기록하기 쉬움 |
+| 파이프라인 상태 | 여러 상태를 각각 설정 | 여러 그래픽 상태를 `PSO`에 묶어 설정 |
+| 리소스 바인딩 | 셰이더 슬롯에 뷰를 직접 설정 | Descriptor Heap과 Root Signature를 통해 리소스를 참조 |
+| 동기화 | 런타임이 일부 관리 | 애플리케이션이 Fence 등으로 명시적으로 관리 |
+| 메모리 관리 | 런타임 추상화가 더 큼 | 리소스 배치와 사용 기간을 앱이 더 많이 관리 |
+
+### Draw 흐름 비교
+
+**DX 11**
+
+```text
+DeviceContext 상태 설정
+  → Draw / DrawIndexed
+  → 런타임이 상태와 명령을 관리
+```
+
+**DX 12**
+
+```text
+리소스와 Descriptor 준비
+  → Command List에 상태와 그리기 명령 기록
+  → Command Queue에 제출
+  → Fence로 GPU 완료 여부 확인
+```
+
+*Cf. DX12가 모든 상황에서 자동으로 더 빠른 것은 아님. 렌더링 작업이 많고 CPU 쪽 제출 비용이 병목인 경우, 여러 스레드를 활용하고 상태·메모리 관리를 잘 설계하면 이점을 얻기 좋다고 함*
+*Cf. 반면 동기화와 리소스 관리를 잘못하면 성능 문제나 에러가 생길 수 있음*
+
+<br/>
+   
+</details>
+
+<details>
+<summary> PSO (Pipeline State Object) </summary>
+
+### PSO란?
+
+> GPU 그래픽스 파이프라인에 필요한 여러 상태를 하나로 묶어 둔 객체
+
+DX11에서는 셰이더, 블렌드 상태, 래스터라이저 상태 등을 각각 설정하는 방식이 일반적
+
+DX12에서는 이런 상태를 구성해 **PSO** 를 만들고, 그리기 전에 해당 **PSO** 를 바인딩
+
+```cpp
+commandList->SetPipelineState(pipelineState);
+```
+
+### PSO 담을 수 있는 파라미터
+
+그래픽스 PSO에는 보통 다음 정보가 들어가 있음
+
+| 종류 | 역할 |
+|---|---|
+| Shaders (VS, PS 등) | 렌더링 파이프라인의 각 프로그래밍 가능 단계에서 실행될 셰이더 바이트코드 지정 |
+| Input Layout | 정점 버퍼의 메모리 구조와 셰이더 입력 시맨틱(Semantic) 간의 매핑 방식 정의 |
+| Blend State | 픽셀 셰이더의 출력 색상과 기존 렌더 타깃 픽셀 색상을 혼합하는 방식 결정 |
+| Rasterizer State | 삼각형의 채우기 모드(Solid/Wireframe), 컬링(Culling), 깊이 편향 등 래스터화 규칙 설정 |
+| Depth/Stencil State | 깊이 버퍼(Z-Buffer)의 비교/쓰기 여부 및 스텐실 버퍼 테스트 연산 규칙 제어 |
+| Primitive Topology Type | 파이프라인이 처리할 기하학적 기본 도형의 유형(점, 선, 삼각형, 패치) 지정 |
+| Render Target Formats | 출력 대상이 될 렌더 타깃(RTV)의 개수 및 각 버퍼의 픽셀 데이터 포맷(DXGI_FORMAT) 정의 |
+| Root Signature | 셰이더가 접근할 리소스(상수, 텍스처, 버퍼 등)의 바인딩 레이아웃과 인터페이스 규약 연결 |
+
+즉 **PSO는 *“이 그리기를 어떤 셰이더와 고정 기능 상태로 실행할지”* 미리 묶어 둔 조리법**
+
+- ex) *불투명 오브젝트용 PSO와 알파 블렌딩 오브젝트용 PSO는 블렌드 상태가 다르므로 별도의 PSO가 필요할 경우*
+
+  ```cpp
+  // 초기화 시점에 PSO 생성
+   device->CreateGraphicsPipelineState(
+    &pipelineStateDesc,
+    IID_PPV_ARGS(&pipelineState)
+   );
+
+   // 렌더링 시점에 사용
+   commandList->SetPipelineState(pipelineState);
+   commandList->DrawIndexedInstanced(...);
+  ```
+
+  - PSO는 일반적으로 초기화 때 만들어 두고 여러 번 재사용함
+  - 셰이더나 렌더 상태 조합이 달라지면 다른 PSO가 필요할 수 있음
+
+<br/>
+
+</details>
+
+<details>
+<summary> Root Signature </summary>
+
+### Root Signature란?
+
+**셰이더가 어떤 종류의 리소스를 어떤 방식으로 받을지 정의하는 바인딩 규칙**
+
+Root Signature 자체가 텍스처나 상수 데이터를 담는 것은 아니라 셰이더가 사용할 리소스를 찾을 수 있도록, 루트 파라미터의 구조를 정함
+
+### Root Signature가 담을 수 있는 파라미터
+
+| 종류 | 역할 |
+|---|---|
+| Root Constants | 적은 양의 상수 값을 루트에 직접 전달 |
+| Root Descriptors | CBV, SRV, UAV 같은 디스크립터 하나를 직접 전달 |
+| Descriptor Tables | Descriptor Heap 안의 디스크립터 범위를 가리킴 |
+
+### Descriptor와의 관계
+
+```text
+Root Signature
+ └─ Descriptor Table
+     └─ Descriptor Heap의 디스크립터
+         └─ 실제 리소스 (텍스처, 버퍼 등)
+```
+
+- 리소스: 실제 텍스처나 버퍼
+- 디스크립터: 리소스를 GPU 셰이더가 읽는 방법을 설명
+- Descriptor Heap: 디스크립터들을 모아 둔 저장 공간
+- Descriptor Table: Root Signature를 통해 디스크립터 범위를 가리키는 방식
+
+### 셰이더 레지스터와 연결
+
+**Root Signature의 descriptor range는 HLSL의 레지스터 선언과 맞아야 사용 가능**
+
+```cpp
+Texture2D albedoTexture : register(t0);
+SamplerState linearSampler : register(s0);
+// Root Signature가 t0의 SRV와 s0의 Sampler를 제공하도록 구성되어야 셰이더에서 해당 리소스를 사용할 수 있음
+```
+
+### 커맨드리스트 에서 바인딩
+
+```cpp
+commandList->SetGraphicsRootSignature(rootSignature);
+commandList->SetGraphicsRootDescriptorTable(
+    0,
+    gpuDescriptorHandle
+);
+```
+
+- **Root Signature는 PSO와 함께 사용**
+- **PSO가 어떤 Root Signature를 기준으로 만들어졌다면, 명령 목록에서도 호환되는 Root Signature를 설정해야 함**
+
+<br/>
+
+</details>
+
+<details>
+<summary> Heap & Allocator </summary>
+
+### Descriptor Heap
+
+**Descriptor Heap은 GPU가 셰이더 리소스를 참조할 때 사용하는 디스크립터들의 묶음**
+
+| 종류 | 용도 |
+|---|---|
+| `CBV_SRV_UAV` | Constant Buffer, Shader Resource, Unordered Access View |
+| `SAMPLER` | 텍스처 샘플링 설정 |
+| `RTV` | 렌더 타깃 뷰 |
+| `DSV` | 깊이/스텐실 뷰 |
+
+셰이더에서 사용하는 디스크립터는 보통 셰이더에서 보이는(shader-visible) 힙에 둠
+
+```cpp
+D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+desc.NumDescriptors = 1024;
+desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap));
+```
+
+> Descriptor Heap은 실제 텍스처나 버퍼의 메모리 힙이 아니다.<br/>리소스를 가리키는 설명자들을 저장한다.
+
+### Resource Heap
+
+**Resource Heap은 버퍼나 텍스처의 실제 GPU 메모리 배치와 관련된 힙**
+
+- `DEFAULT`: GPU에서 주로 사용하는 리소스 메모리
+- `UPLOAD`: CPU가 데이터를 기록해 GPU로 전달할 때 사용하는 메모리
+- `READBACK`: GPU 결과를 CPU가 읽어오는 데 사용하는 메모리
+  
+간단한 프로그램에서는 `CreateCommittedResource`로 리소스와 메모리를 함께 생성할 수 있음
+
+더 많은 리소스를 관리하는 엔진은 하나의 큰 힙을 만들고 여러 리소스가 그 공간을 나눠 쓰도록 구성하기도 함
+
+### Command Allocator
+
+`ID3D12CommandAllocator`는 커맨드 리스트의 명령 기록 공간을 관리함
+
+GPU 리소스나 디스크립터를 할당하는 객체가 아님 
+
+```cpp
+device->CreateCommandAllocator(
+    D3D12_COMMAND_LIST_TYPE_DIRECT,
+    IID_PPV_ARGS(&commandAllocator)
+);
+```
+
+- 커맨드 리스트가 GPU에서 실행 중일 때는 그 명령들이 들어 있는 할당자를 함부로 초기화하거나 재사용하면 안 됌
+- `Fence`로 GPU 작업이 끝난 것을 확인한 뒤 재사용해야 함
+
+### 애플리케이션의 메모리 할당자
+
+DX12 엔진에서는 `Upload Buffer`나 `Descriptor Heap`의 빈 공간을 관리하기 위해 자체 할당자를 만들기도 함
+
+```text
+Upload Allocator
+ └─ 프레임별 상수 데이터 공간을 나눠 줌
+
+Descriptor Allocator
+ └─ Descriptor Heap에서 사용 가능한 슬롯을 나눠 줌
+```
+
+**이런 Allocator는 보통 DX12의 특정 COM 객체 이름이 아니라, 애플리케이션이나 엔진이 만든 관리 코드**
+
+### GPU 사용 중인 메모리 재사용
+
+CPU가 데이터를 기록한 메모리를 GPU가 아직 읽고 있다면, 그 공간을 덮어쓰면 안 됌
+
+보통 프레임별 공간을 나누고 `Fence`로 GPU가 해당 프레임의 작업을 끝냈는지 확인한 뒤 다시 사용 함
+
+```text
+CPU가 프레임 N 데이터 기록
+  → GPU가 프레임 N 작업 실행
+  → Fence 완료 확인
+  → 프레임 N의 메모리 공간 재사용
+```
+
+<br/>
+
+</details>
+
+---
+
+## Issue
+
+- [입문: 포스트 프로세싱 SRV 에러](https://github.com/BOLTB0X/DirectX11-Draw/issues/4) -> [포스트 프로세싱이 잘못된걸 고치는 이야기](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/DX11_Studies/BicubicModifyingPlaneScene.md)
+
+- [입문: 렌즈플레어 적용시 화면 고스트 고정 현상](https://github.com/BOLTB0X/DirectX11-Draw/issues/5) -> [Ghost가 고정되었던 이유에서 존 챔피언 방식으로 고치는 이야기](https://github.com/BOLTB0X/DirectX11-Draw/blob/main/Lab/DX11_Studies/FixedGhost.md)
+
+- [DX11 Sisyphus - 레이마칭-특정 구간부터 아티팩트 발생](https://github.com/BOLTB0X/Sisyphus-Renderer/issues/5)
+
+- [DX11 Sisyphus - Terrain: Heightmap 적용시 검은 면 균열](https://github.com/BOLTB0X/Sisyphus-Renderer/issues/9)
+
+- [DX11 Sisyphus - Terrain 과 Cloud 충돌](https://github.com/BOLTB0X/Sisyphus-Renderer/issues/10)
+
+- [DX12 Rieux - TDR(Device Hung): 카메라를 안 움직일 때는 괜찮다가 이동할 때만 GPU가 뻗어버리는 현상](https://github.com/BOLTB0X/Rieux-Renderer/issues/14)
+  
+- [DX12 Rieux - StartInstanceLocation -> SV_InstanceID 반영이 안 되는 문제](https://github.com/BOLTB0X/Rieux-Renderer/issues/7)
+  
+- [DX12 Rieux - Sponza 모델 텍스처 바인딩 시 메시 깨짐](https://github.com/BOLTB0X/Rieux-Renderer/issues/1)
+
+- [DX12 Rieux - D3D12 WARNING: Live Object at .. : 메모리누수](https://github.com/BOLTB0X/Rieux-Renderer/issues/2)
 
 ---
 
@@ -550,6 +863,13 @@ DirectX 11에서  `ID3D11Buffer`  **인터페이스로 캡슐화되며, CPU에�
 - [Github (jamesscully) - OpenGL Beach Scene](https://github.com/jamesscully/OpenGL-Beach-Scene)
 
 - [네이버 블로그( 프로그래머의 인생, 강동훈 ) - DirectX 11 : Lake from Habib's Water Shader](https://blog.naver.com/fah204)
+
+- [Microsoft Learn - Root Signatures Overview - Win32 apps](https://learn.microsoft.com/en-us/windows/win32/direct3d12/root-signatures-overview)
+
+- [Microsoft Learn - Resource binding overview](https://learn.microsoft.com/en-us/windows/win32/direct3d12/resource-binding-flow-of-control)
+
+- [Microsoft Learn - Core Interfaces](https://learn.microsoft.com/en-us/windows/win32/direct3d12/direct3d-12-interfaces)
+
 
 ### Ray
 
